@@ -513,8 +513,9 @@ def sim_a_gtype(gtype_dict, idx=0, light = 100):
 
     initial_sim_states=sim_states()
     initial_sim_state_list=initial_sim_states.as_list()
-
-    Kx_initial=sim_constants()    
+  
+    Kx_initial=sim_constants() 
+       
 
     constants_dict={}
     k_CBC_light = 60 * (light/(light+250))#this needs change with different light intensity    
@@ -540,23 +541,30 @@ def sim_a_gtype(gtype_dict, idx=0, light = 100):
     Kx.PSII_content_per_leaf = varying[1]
     Kx.PSII_antenna_size = varying[2]
 
-
     new_scv_file = './data/initial_states.csv'
     data_is = pd.read_csv(new_scv_file)
-    new_verifying = data_is.loc[idx, data_is.columns[:1]]
-    Kx.P700_red_initial = new_verifying[0]
+    # new_verifying = data_is.loc[idx, data_is.columns[:1]]
+    # Kx.P700_red_initial = new_verifying[0]
+    # initial_sim_state_list[0]=new_verifying[0]
+
+    # initial_sim_state_list[0] = data_is.loc[idx, 'P700_red_initial']
+
+    # initial_sim_state_list['P700_red_initial'] = data_is.loc[idx, 'P700_red_initial']
+    initial_sim_state_list[15] = data_is.loc[idx, 'P700_red_initial']
+    # print(initial_sim_state_list[15])
+    
     # Kx.PSII_content_per_leaf = new_verifying[1]
     # Kx.PSII_antenna_size = new_verifying[2]
 
 
     
     # 输出当前的 ratio_absorb、PSII_content_per_leaf 和 PSII_antenna_size 值
-    print(f"Current parameters for idx {idx}:")
-    print(f"ratio_absorb: {Kx.ratio_absorb}")
-    print(f"PSII_content_per_leaf: {Kx.PSII_content_per_leaf}")
-    print(f"PSII_antenna_size: {Kx.PSII_antenna_size}")
+    # print(f"Current parameters for idx {idx}:")
+    # print(f"ratio_absorb: {Kx.ratio_absorb}")
+    # print(f"PSII_content_per_leaf: {Kx.PSII_content_per_leaf}")
+    # print(f"PSII_antenna_size: {Kx.PSII_antenna_size}")
     # print(f"P700_red_initial:{initial_sim_state_list[0]}")
-    print(f"P700_red_initial:{Kx.P700_red_initial}")
+    # print(f"P700_red_initial")
 
     constants_dict[on]=Kx #store constants in constants_dict
 
@@ -570,21 +578,22 @@ def sim_a_gtype(gtype_dict, idx=0, light = 100):
     # process_a_gtype(gtype_dict,parameters_of_interest, output_dict, str(idx)+'_'+str(light)+'uE')   
     return process_a_gtype(gtype_dict,parameters_of_interest,output_dict,str(idx)+'_'+str(light)+'uE')  
 
+
+
 # 修改 do_stuff 函数，累积 1000 个仿真结果并保存到单个 CSV 文件
 def do_stuff(LIGHT):
     print(f"Running simulations for LIGHT intensity: {LIGHT}")
     combined_df = pd.DataFrame()  # 用于存储所有 idx 的 gtype_df 数据
-    for idx in range(10000):  # 循环从索引 0 到 999
+    for idx in range(840):  # 循环从索引 0 到 999
         gtype_dict = {}
         gtype_df = sim_a_gtype(gtype_dict, idx=idx, light=LIGHT)  # 获取单个仿真结果的 gtype_df
         gtype_df['idx'] = idx  # 添加 idx 列以标识每个组合
         combined_df = pd.concat([combined_df, gtype_df], ignore_index=True)  # 累积到 combined_df
     
     # 保存所有 idx 的结果到一个 CSV 文件
-    combined_df.to_csv(f'./logs_0.7/combined_{LIGHT}_simulated_0.7.csv', index=False)
-    print(f"All results for LIGHT {LIGHT} saved to combined_{LIGHT}_simulated_0.7.csv")
+    combined_df.to_csv(f'./logs_new/combined_{LIGHT}_simulated_cpp.csv', index=False)
+    print(f"All results for LIGHT {LIGHT} saved to combined_{LIGHT}_simulated_cpp.csv")
     
-
 global FREQUENCY, LIGHT, T_ATP
 FREQUENCY = 1/60
 result_dict = {}
@@ -592,3 +601,4 @@ light_T = [(100, 165),(500, 60)]
 # light_T = [(50, 200), (100, 165), (250, 100), (500, 60), (1000, 40)]
 for LIGHT, T_ATP in light_T:
     do_stuff(LIGHT)
+

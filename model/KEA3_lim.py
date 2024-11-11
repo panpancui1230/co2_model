@@ -4,6 +4,7 @@ import matplotlib.pyplot as plt
 from scipy.integrate import odeint
 from scipy.integrate import ode
 from scipy.integrate import solve_ivp
+from scipy.integrate import cumulative_trapezoid
 from matplotlib.ticker import FormatStrFormatter
 import matplotlib as mpl
 import importlib as im
@@ -67,14 +68,14 @@ points_per_segment=1000
 
 
 #Function f calculates the changes in state for the entire systems
-def f(t, y, pKreg, max_PSII, kQA, max_b6f, lumen_protons_per_turnover, PAR, ATP_synthase_max_turnover, 
+def f(t, y, ratio_absorb,PSII_content_per_leaf,pKreg, max_PSII, kQA, max_b6f, lumen_protons_per_turnover, PAR, ATP_synthase_max_turnover, 
     PSII_antenna_size, Volts_per_charge, perm_K, n, Em7_PQH2, Em7_PC,Em_Fd, PSI_antenna_size, 
     buffering_capacity, VDE_max_turnover_number, pKvde, VDE_Hill, kZE, pKPsbS, max_NPQ, k_recomb, k_PC_to_P700, 
     triplet_yield, triplet_to_singletO2_yield, fraction_pH_effect, k_Fd_to_NADP, k_CBC, k_KEA, k_VCCN1, k_CLCE, k_NDH): 
     sun = sunshine()
     #The following are holders for paramters for testing internal functions of f
     PAR = sun.light(t, 1200, LIGHT, FREQUENCY, 900, 100)
-    light_per_L=0.84 * PAR/0.7
+    light_per_L=ratio_absorb * PAR/PSII_content_per_leaf
 
 
     computer = block()
@@ -429,7 +430,7 @@ def do_complete_sim(y00, t_end, Kx):
 
     # calculate the deficit in ATP/NADPH and store it in output['deficit']
     output['deficit']=(output['LEF_to_NADPH']*(3.0/Kx.n)-output['ATP_rate'])  
-    output['deficit_int']=integrate.cumtrapz(output['deficit'], output['time_axis'], initial=0)
+    output['deficit_int']=integrate.cumulative_trapezoid(output['deficit'], output['time_axis'], initial=0)
     output['fract_deficit']=output['deficit_int']/output['LEF_to_NADPH']
 
     return(output)
@@ -458,14 +459,14 @@ def dark_equibration(y_initial, Kx, total_duration, **keyword_parameters):
         return(dark_equilibrated_initial_y)
 
     
-global_painter = Plotting()
-plot_results={}
-plot_results['pmf_params']=global_painter.plot_pmf_params
-plot_results['pmf_params_offset']=global_painter.plot_pmf_params_offset
-plot_results['K_and_parsing']=global_painter.plot_K_and_parsing
-plot_results['plot_QAm_and_singletO2']=global_painter.plot_QAm_and_singletO2
-plot_results['plot_cum_LEF_singetO2']=global_painter.plot_cum_LEF_singetO2
-plot_results['b6f_and_balance'] = global_painter.b6f_and_balance
+# global_painter = Plotting()
+# plot_results={}
+# plot_results['pmf_params']=global_painter.plot_pmf_params
+# plot_results['pmf_params_offset']=global_painter.plot_pmf_params_offset
+# plot_results['K_and_parsing']=global_painter.plot_K_and_parsing
+# plot_results['plot_QAm_and_singletO2']=global_painter.plot_QAm_and_singletO2
+# plot_results['plot_cum_LEF_singetO2']=global_painter.plot_cum_LEF_singetO2
+# plot_results['b6f_and_balance'] = global_painter.b6f_and_balance
     
 
 class ListTable(list):
@@ -500,92 +501,106 @@ def process_a_gtype(gtype_dict, parameter_list, out_dict, gtype='a_genotype'):
     gtype_df = pd.DataFrame([])
     for para in parameter_list:
         gtype_dict[para] = out_dict[para]#store in dictionary for further calculation
-        gtype_df[para] = out_dict[para]
+        gtype_df[para] = [np.mean(out_dict[para][-20:])]
     
-    file_path = './logs/' + gtype + '_simulated.csv'
-    gtype_df.to_csv(file_path)
-   
-def sim_a_gtype(gtype_dict, gtype='WT', light = 100):  
+    return gtype_df
+
+
+def sim_a_gtype(gtype_dict, idx=0, light = 100):  
     parameters_of_interest = ['time_axis','NPQ','Phi2','LEF','qL','Z','V',\
                           'pmf','Dy','pHlumen','fraction_Dy','fraction_DpH',\
                           'Klumen','Cl_lumen','Cl_stroma']
 
     initial_sim_states=sim_states()
-    initial_sim_state_list=initial_sim_states.as_list()
-    Kx_initial=sim_constants()    
+    # initial_sim_state_list=initial_sim_states.as_list()
+  
+    Kx_initial=sim_constants() 
+       
 
     constants_dict={}
     k_CBC_light = 60 * (light/(light+250))#this needs change with different light intensity    
 
     output_dict={}
-    on = gtype
+    on = str(idx)
     Kx=sim_constants()
-    if 'clce2' in gtype:
-        Kx.k_CLCE = 0
-    if 'kea3' in gtype:
-        Kx.k_KEA =0
-    if 'vccn1' in gtype:
-        Kx.k_VCCN1 =0
+    # if 'clce2' in gtype:
+    #     Kx.k_CLCE = 0
+    # if 'kea3' in gtype:
+    #     Kx.k_KEA =0
+    # if 'vccn1' in gtype:
+    #     Kx.k_VCCN1 =0
     Kx.k_CBC = k_CBC_light
+    csv_file='./data/constants.csv'
+    data_df = pd.read_csv(csv_file) # get the changing constants dataframe
+    varying = data_df.loc[idx, data_df.columns[:3]]  # take row index, and first 3 columns
+    
+    
+
+    # now change the constants
+    Kx.ratio_absorb = varying[0]
+    Kx.PSII_content_per_leaf = varying[1]
+    Kx.PSII_antenna_size = varying[2]
+
+    new_scv_file = './data/initial_states.csv'
+    data_is = pd.read_csv(new_scv_file)
+    # new_verifying = data_is.loc[idx, data_is.columns[:1]]
+    # Kx.P700_red_initial = new_verifying[0]
+    # initial_sim_state_list[0]=new_verifying[0]
+
+    # initial_sim_state_list[0] = data_is.loc[idx, 'P700_red_initial']
+
+    # initial_sim_state_list['P700_red_initial'] = data_is.loc[idx, 'P700_red_initial']
+    # initial_sim_state_list[15] = data_is.loc[idx, 'P700_red_initial']
+    initial_sim_states.P700_red = data_is.loc[idx, 'P700_red_initial']
+    initial_sim_state_list=initial_sim_states.as_list()
+    # print(initial_sim_state_list[15])
+    
+    # Kx.PSII_content_per_leaf = new_verifying[1]
+    # Kx.PSII_antenna_size = new_verifying[2]
+
+
+    
+    # 输出当前的 ratio_absorb、PSII_content_per_leaf 和 PSII_antenna_size 值
+    print(f"Current parameters for idx {idx}:")
+    print(f"ratio_absorb: {Kx.ratio_absorb}")
+    print(f"PSII_content_per_leaf: {Kx.PSII_content_per_leaf}")
+    print(f"PSII_antenna_size: {Kx.PSII_antenna_size}")
+    print(f"P700_red_initial:{initial_sim_state_list[0]}")
+    # print(f"P700_red_initial")
+
     constants_dict[on]=Kx #store constants in constants_dict
 
     output_dict=sim_ivp(Kx, initial_sim_state_list, 1200)
     Changed_Constants_Table('Change Constants', Kx_initial, Kx)
     output_dict['qL'] = 1-output_dict['QAm']
     paint = Plotting()
-    paint.plot_interesting_stuff(gtype, output_dict)
+    # paint.plot_interesting_stuff(str(idx), output_dict)
+
     # plot_interesting_stuff(gtype, output_dict)
-    process_a_gtype(gtype_dict,parameters_of_interest, output_dict,gtype+'_'+str(light)+'uE')    
+    # process_a_gtype(gtype_dict,parameters_of_interest, output_dict, str(idx)+'_'+str(light)+'uE')   
+    return process_a_gtype(gtype_dict,parameters_of_interest,output_dict,str(idx)+'_'+str(light)+'uE')  
 
+
+
+# 修改 do_stuff 函数，累积 1000 个仿真结果并保存到单个 CSV 文件
 def do_stuff(LIGHT):
-    print(LIGHT)
-    WT = {}
-    sim_a_gtype(WT, 'WT', LIGHT)
-    kea3 ={}
-    sim_a_gtype(kea3, 'kea3', LIGHT)
-    time_min = WT['time_axis']/60
-    idx = np.argwhere(time_min == 2)[0][0]
+    print(f"Running simulations for LIGHT intensity: {LIGHT}")
+    combined_df = pd.DataFrame()  # 用于存储所有 idx 的 gtype_df 数据
+    for idx in range(840):  # 循环从索引 0 到 999
+        gtype_dict = {}
+        gtype_df = sim_a_gtype(gtype_dict, idx=idx, light=LIGHT)  # 获取单个仿真结果的 gtype_df
+        gtype_df['idx'] = idx  # 添加 idx 列以标识每个组合
+        combined_df = pd.concat([combined_df, gtype_df], ignore_index=True)  # 累积到 combined_df
     
-    delta_NPQ = kea3['NPQ']-WT['NPQ']
-    delta_LEF = kea3['LEF']-WT['LEF']
+    # 保存所有 idx 的结果到一个 CSV 文件
+    combined_df.to_csv(f'./logs_new/combined_{LIGHT}_simulated_lim.csv', index=False)
+    print(f"All results for LIGHT {LIGHT} saved to combined_{LIGHT}_simulated_lim.csv")
     
-    # df_list.append(time_min)
-    df_ = {}
-
-    df_['kea3_dNPQ'] = delta_NPQ
-    df_['kea3_dLEF'] = delta_LEF
-    df_['WT_NPQ'] = WT['NPQ']
-    df_['WT_LEF'] = WT['LEF']
-    fig = plt.figure(num=3, figsize=(5,4), dpi=200)
-    plt.plot(time_min[1:],delta_NPQ[1:],label = '∆NPQ: kea3 - WT')
-    plt.legend()
-    plt.show()
-    plt.close()
-    fig = plt.figure(num=3, figsize=(5,4), dpi=200)
-    plt.plot(time_min[1:],delta_LEF[1:],label = '∆LEF: kea3 - WT')
-    plt.legend()
-    plt.show()
-    plt.close()
-    pdindex =pd.Index(WT['time_axis'], name = 'time/s')
-    df_NPQ = pd.DataFrame(df_, index = pdindex)
-    file_path = './logs/' + 'delta_NPQ_LEF' + str(LIGHT) + '_uE_simulated.csv'
-    df_NPQ.to_csv(file_path) 
-    plt.show()
-    plt.close()
-
-    return (delta_NPQ[idx], delta_LEF[idx],\
-            delta_NPQ[idx]/WT['NPQ'][idx], delta_LEF[idx]/WT['LEF'][idx])
-
 global FREQUENCY, LIGHT, T_ATP
 FREQUENCY = 1/60
 result_dict = {}
-light_T = [(50, 200), (100, 165), (250, 100), (500, 60), (1000, 40)]
+light_T = [(100, 165),(500, 60)]
+# light_T = [(50, 200), (100, 165), (250, 100), (500, 60), (1000, 40)]
 for LIGHT, T_ATP in light_T:
-    delta = do_stuff(LIGHT)
-    result_dict[LIGHT] = delta
-col_list = ['dNPQ_2min', 'dLEF_2min', 'dNPQ_rel', 'dLEF_rel']    
-column = {}
-for i, col in enumerate(col_list):
-    column[i] = col
-result_df = pd.DataFrame(result_dict).T
-result_df.rename(columns = column, inplace= True)
+    do_stuff(LIGHT)
+
