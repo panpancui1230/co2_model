@@ -482,19 +482,19 @@ class ListTable(list):
         return ''.join(html)
         
 #display only the constants that are different
-def Changed_Constants_Table(table_title, original_values, Kxx):
-    table = ListTable()
-    table.append(['Changed Parameter', 'Old Value', 'New Value']) #, 'Short Description'])
-    Kdict=Kxx.as_dictionary()
-    original_values_dict=original_values.as_dictionary()
+# def Changed_Constants_Table(table_title, original_values, Kxx):
+#     table = ListTable()
+#     table.append(['Changed Parameter', 'Old Value', 'New Value']) #, 'Short Description'])
+#     Kdict=Kxx.as_dictionary()
+#     original_values_dict=original_values.as_dictionary()
 
-    for key in list(Kdict.keys()):
-        if Kdict[key] == original_values_dict[key]:
-            pass
-        else:
-            table.append([key, original_values_dict[key], Kdict[key]]) #, Ksumm[key]])
-    print(table_title)
-    display(table)
+#     for key in list(Kdict.keys()):
+#         if Kdict[key] == original_values_dict[key]:
+#             pass
+#         else:
+#             table.append([key, original_values_dict[key], Kdict[key]]) #, Ksumm[key]])
+#     print(table_title)
+#     display(table)
 
 #PROCESS A GENOTYPE AND SAVE ITS SIMULATED VALUES
 def process_a_gtype(gtype_dict, parameter_list, out_dict, gtype='a_genotype'):
@@ -569,7 +569,7 @@ def sim_a_gtype(gtype_dict, idx=0, light = 100):
     constants_dict[on]=Kx #store constants in constants_dict
 
     output_dict=sim_ivp(Kx, initial_sim_state_list, 1200)
-    Changed_Constants_Table('Change Constants', Kx_initial, Kx)
+    # Changed_Constants_Table('Change Constants', Kx_initial, Kx)
     output_dict['qL'] = 1-output_dict['QAm']
     paint = Plotting()
     # paint.plot_interesting_stuff(str(idx), output_dict)
@@ -581,24 +581,48 @@ def sim_a_gtype(gtype_dict, idx=0, light = 100):
 
 
 # 修改 do_stuff 函数，累积 1000 个仿真结果并保存到单个 CSV 文件
+# def do_stuff(LIGHT):
+#     print(f"Running simulations for LIGHT intensity: {LIGHT}")
+#     combined_df = pd.DataFrame()  # 用于存储所有 idx 的 gtype_df 数据
+#     for idx in range(840):  # 循环从索引 0 到 999
+#         gtype_dict = {}
+#         gtype_df = sim_a_gtype(gtype_dict, idx=idx, light=LIGHT)  # 获取单个仿真结果的 gtype_df
+#         gtype_df['idx'] = idx  # 添加 idx 列以标识每个组合
+#         combined_df = pd.concat([combined_df, gtype_df], ignore_index=True)  # 累积到 combined_df
+    
+#     # 保存所有 idx 的结果到一个 CSV 文件
+#     combined_df.to_csv(f'./logs_cpp/combined_{LIGHT}_simulated_cpp_6.0.csv', index=False)
+#     print(f"All results for LIGHT {LIGHT} saved to combined_{LIGHT}_simulated_cpp_6.0.csv")
+
+
+# 修改 do_stuff 函数，累积 1000 个仿真结果并保存到单个 CSV 文件
 def do_stuff(LIGHT):
     print(f"Running simulations for LIGHT intensity: {LIGHT}")
     combined_df = pd.DataFrame()  # 用于存储所有 idx 的 gtype_df 数据
-    for idx in range(840):  # 循环从索引 0 到 999
-        gtype_dict = {}
-        gtype_df = sim_a_gtype(gtype_dict, idx=idx, light=LIGHT)  # 获取单个仿真结果的 gtype_df
-        gtype_df['idx'] = idx  # 添加 idx 列以标识每个组合
-        combined_df = pd.concat([combined_df, gtype_df], ignore_index=True)  # 累积到 combined_df
-    
+    error_indices = []
+    for idx in range(840):  # 循环从索引 0 到 839
+        try:
+            gtype_dict = {}
+            gtype_df = sim_a_gtype(gtype_dict, idx=idx, light=LIGHT)  # 获取单个仿真结果的 gtype_df
+            gtype_df['idx'] = idx  # 添加 idx 列以标识每个组合
+            combined_df = pd.concat([combined_df, gtype_df], ignore_index=True)  # 累积到 combined_df
+        except ValueError as e:
+            print(f"ValueError at idx {idx}: {e}")
+            error_indices.append(idx)
+        # except Exception as e:
+        #     print(f"An error occurred at idx {idx}: {e}")
+        #     error_indices.append(idx)
+
     # 保存所有 idx 的结果到一个 CSV 文件
-    combined_df.to_csv(f'./logs_new/combined_{LIGHT}_simulated_cpp.csv', index=False)
-    print(f"All results for LIGHT {LIGHT} saved to combined_{LIGHT}_simulated_cpp.csv")
-    
+    combined_df.to_csv(f'./logs_cpp/combined_{LIGHT}_simulated_cpp_try_1.csv', index=False)
+    print(f"All results for LIGHT {LIGHT} saved to combined_{LIGHT}_simulated_cpp_try_1.csv")
+
 global FREQUENCY, LIGHT, T_ATP
 FREQUENCY = 1/60
 result_dict = {}
-light_T = [(100, 165),(500, 60)]
+# light_T = [(100, 165)]
+light_T = [(500, 60)]
+# light_T = [(100, 165),(500, 60)]
 # light_T = [(50, 200), (100, 165), (250, 100), (500, 60), (1000, 40)]
 for LIGHT, T_ATP in light_T:
     do_stuff(LIGHT)
-
