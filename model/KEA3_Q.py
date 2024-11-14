@@ -89,8 +89,8 @@ def f(t, y, ratio_absorb,PSII_content_per_leaf,pKreg, max_PSII, kQA, max_b6f, lu
     #calculate pmf from Dy and deltapH 
     pmf=Dy + 0.06*(pHstroma-pHlumen)
 
-    Phi2=computer.Calc_Phi2(QA, NPQ) #I use the current' value of NPQ. I then calculate the difference below 
-
+    # Phi2=computer.Calc_Phi2(QA, NPQ) #I use the current' value of NPQ. I then calculate the difference below 
+    Phi2=computer.Calc_Phi2(QA,QAm,NPQ)
     PSII_charge_separations=PSII_antenna_size*light_per_L * Phi2
     
     
@@ -277,9 +277,12 @@ def do_complete_sim(y00, t_end, Kx):
 
     Phi2_array=[] #contains the calculated Phi2 results
     QA = output['QA']
+    QAm=output['QAm']
     NPQ_array = output['NPQ_array']
+
     for i in range(len(QA)):
-        Phi2_array.append(computer.Calc_Phi2(QA[i], NPQ_array[i]))
+        # Phi2_array.append(computer.Calc_Phi2(QA[i], NPQ_array[i]))
+        Phi2_array.append(computer.Calc_Phi2(QA[i],QAm[i],NPQ_array[i]))
         
     #calculate tPhiNO and PhiNPQ
     # using the Calc_PhiNO_PhiNPQ function.
@@ -512,7 +515,7 @@ def sim_a_gtype(gtype_dict, idx=0, light = 100):
                           'Klumen','Cl_lumen','Cl_stroma']
 
     initial_sim_states=sim_states()
-    initial_sim_state_list=initial_sim_states.as_list()
+    # initial_sim_state_list=initial_sim_states.as_list()
   
     Kx_initial=sim_constants() 
        
@@ -549,8 +552,10 @@ def sim_a_gtype(gtype_dict, idx=0, light = 100):
 
     # initial_sim_state_list[0] = data_is.loc[idx, 'P700_red_initial']
 
-    # initial_sim_state_list['P700_red_initial'] = data_is.loc[idx, 'P700_red_initial']
-    initial_sim_state_list[15] = data_is.loc[idx, 'P700_red_initial']
+    initial_sim_state_list['P700_red_initial'] = data_is.loc[idx, 'P700_red_initial']
+    initial_sim_state_list['QA_content_initial'] = data_is.loc[idx, 'QA_content_initial']
+    initial_sim_state_list=initial_sim_states.as_list()
+    # initial_sim_state_list[15] = data_is.loc[idx, 'P700_red_initial']
     # print(initial_sim_state_list[15])
     
     # Kx.PSII_content_per_leaf = new_verifying[1]
@@ -570,8 +575,12 @@ def sim_a_gtype(gtype_dict, idx=0, light = 100):
 
     output_dict=sim_ivp(Kx, initial_sim_state_list, 1200)
     # Changed_Constants_Table('Change Constants', Kx_initial, Kx)
-    output_dict['qL'] = 1-output_dict['QAm']
-    paint = Plotting()
+    # output_dict['qL'] = 1-output_dict['QAm']
+
+    output_dict['qL'] = output_dict['QA']/(output_dict['QA']+output_dict['QAm'])
+
+
+    # paint = Plotting()
     # paint.plot_interesting_stuff(str(idx), output_dict)
 
     # plot_interesting_stuff(gtype, output_dict)
@@ -614,8 +623,8 @@ def do_stuff(LIGHT):
         #     error_indices.append(idx)
 
     # 保存所有 idx 的结果到一个 CSV 文件
-    combined_df.to_csv(f'./logs_cpp/combined_{LIGHT}_simulated_cpp_try_2.csv', index=False)
-    print(f"All results for LIGHT {LIGHT} saved to combined_{LIGHT}_simulated_cpp_try_2.csv")
+    combined_df.to_csv(f'./logs_QA/combined_{LIGHT}_simulated_1.csv', index=False)
+    print(f"All results for LIGHT {LIGHT} saved to combined_{LIGHT}_simulated_1.csv")
 
 global FREQUENCY, LIGHT, T_ATP
 FREQUENCY = 1/60
