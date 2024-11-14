@@ -17,13 +17,25 @@
 import pandas as pd
 
 # Load the data
-df = pd.read_csv('./data/initial_states.csv')  # Replace with the actual file path
+df_constants = pd.read_csv('./data/constants.csv')  # Replace with the actual file path
+df_initial=pd.read_csv('./data/initial_states_5.0.csv')
 
 # Update values in 'P700_red_initial' column
-df['P700_red_initial'] = df['P700_red_initial'].replace({4.0:6.0})
+#QA保留3位小数
+df_initial['QA'] = (df_constants['PSII_content_per_leaf']/0.7).round(5)
 
+#将QA移到第二列
+columns=list(df_initial.columns)
+columns.remove('QA')
+columns.insert(1,'QA')
+df_initial=df_initial[columns]
+
+#删除原来的QA_initial
+df_initial=df_initial.drop(columns=['QA_content_initial'])
+
+# df_initial['QA'] = df_constants['PSII_content_per_leaf'].replace({4.0:6.0})
 # Save the modified dataframe to a new CSV file
-df.to_csv('./data/initial_states.csv', index=False)
+df_initial.to_csv('./data/initial_states.csv', index=False)
 
 print("Values updated and saved to 'updated_file.csv'")
 
