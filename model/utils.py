@@ -49,7 +49,7 @@ class standard_constants(object):
             setattr(self, column, df[column].iloc[0])
 
 class standard_initial_states(object):
-    def __init__(self, csv_file='./data/initial_states.csv'):
+    def __init__(self, csv_file='./data/initial_states_6.0.csv'):
         if csv_file:
             self.load_from_csv(csv_file)
         else:

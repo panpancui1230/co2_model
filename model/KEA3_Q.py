@@ -546,15 +546,21 @@ def sim_a_gtype(gtype_dict, idx=0, light = 100):
 
     new_scv_file = './data/initial_states.csv'
     data_is = pd.read_csv(new_scv_file)
+    print(data_is.columns)
     # new_verifying = data_is.loc[idx, data_is.columns[:1]]
     # Kx.P700_red_initial = new_verifying[0]
     # initial_sim_state_list[0]=new_verifying[0]
 
     # initial_sim_state_list[0] = data_is.loc[idx, 'P700_red_initial']
 
-    initial_sim_state_list['P700_red_initial'] = data_is.loc[idx, 'P700_red_initial']
-    initial_sim_state_list['QA_content_initial'] = data_is.loc[idx, 'QA_content_initial']
+    # initial_sim_state_list['P700_red_initial'] = data_is.loc[idx, 'P700_red_initial']
+    # initial_sim_state_list['QA_content_initial'] = data_is.loc[idx, 'QA_content_initial']
+    # initial_sim_state_list=initial_sim_states.as_list()
+
+    initial_sim_states.P700_red = data_is.loc[idx, 'P700_red_initial']
+    initial_sim_states.QA_content = data_is.loc[idx, 'QA_content_initial']
     initial_sim_state_list=initial_sim_states.as_list()
+
     # initial_sim_state_list[15] = data_is.loc[idx, 'P700_red_initial']
     # print(initial_sim_state_list[15])
     
