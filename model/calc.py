@@ -51,7 +51,13 @@ class block:
         NADPH_CBC = min([NADPH_CBC_ATP,NADPH_CBC_t])
         return NADPH_CBC
             
-    def Calc_Phi2(self, QA, NPQ):
+    # def Calc_Phi2(self, QA, NPQ):
+    #     Phi2=1/(1+(1+NPQ)/(4.88*QA))
+    #     return Phi2
+
+    #用更新后的QA，计算更新后的Phi2
+    def Calc_Phi2(self, QA, QAm,NPQ):
+        QA = QA/(QA+QAm)
         Phi2=1/(1+(1+NPQ)/(4.88*QA))
         return Phi2
 
