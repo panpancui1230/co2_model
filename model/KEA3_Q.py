@@ -636,8 +636,8 @@ def do_stuff(LIGHT):
 global FREQUENCY, LIGHT, T_ATP
 FREQUENCY = 1/60
 result_dict = {}
-light_T = [(100, 165)]
-# light_T = [(500, 60)]
+# light_T = [(100, 165)]
+light_T = [(500, 60)]
 # light_T = [(100, 165),(500, 60)]
 # light_T = [(50, 200), (100, 165), (250, 100), (500, 60), (1000, 40)]
 for LIGHT, T_ATP in light_T:
