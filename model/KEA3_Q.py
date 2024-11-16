@@ -513,7 +513,7 @@ def process_a_gtype(gtype_dict, parameter_list, out_dict, gtype='a_genotype'):
 def sim_a_gtype(gtype_dict, idx=0, light = 100):  
     parameters_of_interest = ['time_axis','NPQ','Phi2','LEF','qL','Z','V',\
                           'pmf','Dy','pHlumen','fraction_Dy','fraction_DpH',\
-                          'Klumen','Cl_lumen','Cl_stroma','ATP_made']
+                          'Klumen','Cl_lumen','Cl_stroma']
 
     initial_sim_states=sim_states()
     # initial_sim_state_list=initial_sim_states.as_list()
