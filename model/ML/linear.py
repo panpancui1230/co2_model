@@ -4,7 +4,7 @@ from sklearn.linear_model import LinearRegression
 from sklearn.metrics import mean_squared_error, r2_score
 
 # 加载数据
-file_path = '/Users/panpan/Desktop/ML/result_100.csv'
+file_path = '/Users/panpan/Desktop/co2_model/model/ML/result_100.csv'
 
 data = pd.read_csv(file_path)
 
@@ -28,11 +28,11 @@ y_pred = lr_model.predict(X_test)
 mse = mean_squared_error(y_test, y_pred)
 r2 = r2_score(y_test, y_pred)
 
-# 输出性能评估指标
+# 性能评估
 print(f"均方误差 (MSE): {mse}")
 print(f"决定系数 (R²): {r2}")
 
-# 查看模型的系数和截距
+# 模型的系数和截距
 coefficients = lr_model.coef_  # 每个自变量的系数
 intercept = lr_model.intercept_  # 截距
 
@@ -42,4 +42,4 @@ print("模型截距:", intercept)
 # 预测新数据
 new_data = [[0.84, 0.7, 0.5, 0.7]] 
 predicted_value = lr_model.predict(new_data)
-print(f"新数据的预测值: {predicted_value[0]}")
+print(f"预测值: {predicted_value[0]}")
