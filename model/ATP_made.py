@@ -1,7 +1,7 @@
 import pandas as pd
 
 # Load the CSV file
-file_path = './logs_QA/combined_500_simulated_PSI.csv'
+file_path = './logs_10000/combined_file.csv'
 df = pd.read_csv(file_path)
 
 # Define the function to calculate v_ATP_made
@@ -21,7 +21,7 @@ if 'pmf' not in df.columns:
 df['v_ATP_made'] = df['pmf'].apply(Vproton_pmf_actvt)
 
 # Save the modified dataframe to a new CSV file
-output_path = './logs_QA/result_500_ATP_made.csv'
+output_path = './logs_10000/combined_file_ATP_made.csv'
 df.to_csv(output_path, index=False)
 
 print(f"v_ATP_made calculated and saved to '{output_path}'.")

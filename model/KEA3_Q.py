@@ -616,7 +616,7 @@ def do_stuff(LIGHT):
     print(f"Running simulations for LIGHT intensity: {LIGHT}")
     combined_df = pd.DataFrame()  # 用于存储所有 idx 的 gtype_df 数据
     # error_indices = []
-    for idx in range(840):  # 循环从索引 0 到 839
+    for idx in range(10000):  # 循环从索引 0 到 839
         try:
             gtype_dict = {}
             gtype_df = sim_a_gtype(gtype_dict, idx=idx, light=LIGHT)  # 获取单个仿真结果的 gtype_df
@@ -630,15 +630,15 @@ def do_stuff(LIGHT):
         #     error_indices.append(idx)
 
     # 保存所有 idx 的结果到一个 CSV 文件
-    combined_df.to_csv(f'./logs_QA/combined_{LIGHT}_simulated_PSI_ATP.csv', index=False)
-    print(f"All results for LIGHT {LIGHT} saved to combined_{LIGHT}_simulated_PSI_ATP.csv")
+    combined_df.to_csv(f'./logs_QA/combined_{LIGHT}_simulated_10000.csv', index=False)
+    print(f"All results for LIGHT {LIGHT} saved to combined_{LIGHT}_simulated_10000.csv")
 
 global FREQUENCY, LIGHT, T_ATP
 FREQUENCY = 1/60
 result_dict = {}
 # light_T = [(100, 165)]
-light_T = [(500, 60)]
-# light_T = [(100, 165),(500, 60)]
+# light_T = [(500, 60)]
+light_T = [(100, 165),(500, 60)]
 # light_T = [(50, 200), (100, 165), (250, 100), (500, 60), (1000, 40)]
 for LIGHT, T_ATP in light_T:
     do_stuff(LIGHT)
