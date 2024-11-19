@@ -2,8 +2,8 @@ import pandas as pd
 import matplotlib.pyplot as plt
 
 # Load the data
-file_path = './logs_10000/combined_file_100_CO2.csv'  # Replace with your actual file path
-# file_path = './logs_QA/combined_100_simulated_PSI_ATP.csv' 
+file_path = './logs_10000_500/combined_file_500_CO2.csv'  # Replace with your actual file path
+# file_path = './logs_10000_500/result_500_CO2.csv' 
 df = pd.read_csv(file_path)
 
 # Check if required columns are present
