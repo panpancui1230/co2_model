@@ -48,11 +48,3 @@ print(f"训练集均方误差 (MSE): {train_mse:.4f}")
 print(f"测试集均方误差 (MSE): {test_mse:.4f}")
 print(f"训练集 R²: {train_r2:.4f}")
 print(f"测试集 R²: {test_r2:.4f}")
-
-# 可视化特征系数
-plt.figure(figsize=(10, 6))
-plt.bar(X.columns, lasso.coef_)
-plt.title("Lasso 特征权重")
-plt.xlabel("特征")
-plt.ylabel("权重值")
-plt.show()

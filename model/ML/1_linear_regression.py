@@ -1,10 +1,9 @@
 import pandas as pd
+import matplotlib.pyplot as plt
+import seaborn as sns
 from sklearn.model_selection import train_test_split
 from sklearn.linear_model import LinearRegression
 from sklearn.metrics import mean_squared_error, r2_score
-import matplotlib.pyplot as plt
-import seaborn as sns
-import os
 
 # 加载数据
 file_path = './100_CO2.csv'
@@ -48,25 +47,25 @@ predicted_value = lr_model.predict(new_data)
 print(f"预测值: {predicted_value[0]}")
 
 
-# #实际值 vs 预测值散点图
-# # Construct a DataFrame for use with seaborn
-# results_df = pd.DataFrame({
-#     "Actual": y_test,
-#     "Predicted": y_pred
-# })
+#实际值 vs 预测值散点图
+# Construct a DataFrame for use with seaborn
+results_df = pd.DataFrame({
+    "Actual": y_test,
+    "Predicted": y_pred
+})
 
-# # Plot scatterplot
-# plt.figure(figsize=(8, 6))
-# sns.scatterplot(data=results_df, x="Actual", y="Predicted", color='blue', alpha=0.7, label="Predicted vs Actual")
-# plt.plot([y_test.min(), y_test.max()], [y_test.min(), y_test.max()], 'r--', label="Ideal Prediction")  # Ideal prediction line
+# Plot scatterplot
+plt.figure(figsize=(8, 6))
+sns.scatterplot(data=results_df, x="Actual", y="Predicted", color='blue', alpha=0.7, label="Predicted vs Actual")
+plt.plot([y_test.min(), y_test.max()], [y_test.min(), y_test.max()], 'r--', label="Ideal Prediction")  # Ideal prediction line
 
-# # Add legend and title
-# plt.xlabel("Actual Values")
-# plt.ylabel("Predicted Values")
-# plt.title("Predicted vs Actual Values")
-# plt.legend(loc='upper left')
-# plt.grid(False)
-# plt.show()
+# Add legend and title
+plt.xlabel("Actual Values")
+plt.ylabel("Predicted Values")
+plt.title("Predicted vs Actual Values")
+plt.legend(loc='upper left')
+plt.grid(False)
+plt.show()
 
 
 # #残差图 (Residual Plot)

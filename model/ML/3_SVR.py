@@ -13,7 +13,7 @@ df = pd.read_csv(file_path)
 X = df[["ratio_absorb", "PSII_content_per_leaf", "PSII_antenna_size", "P700_red_initial"]]
 y = df["CO2"]
 
-# 数据标准化（SVR 对数据范围敏感）
+# 数据标准化
 scaler_X = StandardScaler()
 scaler_y = StandardScaler()
 
@@ -49,14 +49,3 @@ print(f"测试集均方误差 (MSE): {test_mse:.4f}")
 print(f"训练集 R²: {train_r2:.4f}")
 print(f"测试集 R²: {test_r2:.4f}")
 
-# # 可视化预测结果
-# import matplotlib.pyplot as plt
-
-# plt.figure(figsize=(12, 6))
-# plt.scatter(range(len(y_test_orig)), y_test_orig, label="真实值", color="blue")
-# plt.scatter(range(len(y_test_pred_orig)), y_test_pred_orig, label="预测值", color="red")
-# plt.legend()
-# plt.title("SVR 回归预测结果 (测试集)")
-# plt.xlabel("样本索引")
-# plt.ylabel("CO2 值")
-# plt.show()
