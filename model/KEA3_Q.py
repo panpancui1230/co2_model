@@ -633,7 +633,7 @@ def do_stuff(LIGHT):
     combined_df.to_csv(f'./logs_QA/combined_{LIGHT}_simulated_10000.csv', index=False)
     print(f"All results for LIGHT {LIGHT} saved to combined_{LIGHT}_simulated_10000.csv")
 
-global FREQUENCY, LIGHT, T_ATP
+global FREQUENCY, LIGHT
 FREQUENCY = 1/60
 result_dict = {}
 # light_T = [(100, 165)]
