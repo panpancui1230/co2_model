@@ -431,7 +431,9 @@ def do_complete_sim(y00, t_end, Kx):
     # output['deficit']=(output['LEF_to_NADPH']*(3.0/Kx.n)-output['ATP_rate'])  
     # output['deficit_int']=integrate.cumtrapz(output['deficit'], output['time_axis'], initial=0)
     # output['fract_deficit']=output['deficit_int']/output['LEF_to_NADPH']
-
+    output['deficit']=(output['LEF_to_NADPH']*(3.0/Kx.n)-output['ATP_rate'])  
+    output['deficit_int']=integrate.cumulative_trapezoid(output['deficit'], output['time_axis'], initial=0)
+    output['fract_deficit']=output['deficit_int']/output['LEF_to_NADPH']
     return(output)
 
 def dark_equibration(y_initial, Kx, total_duration, **keyword_parameters): 
@@ -458,14 +460,14 @@ def dark_equibration(y_initial, Kx, total_duration, **keyword_parameters):
         return(dark_equilibrated_initial_y)
 
     
-global_painter = Plotting()
-plot_results={}
-plot_results['pmf_params']=global_painter.plot_pmf_params
-plot_results['pmf_params_offset']=global_painter.plot_pmf_params_offset
-plot_results['K_and_parsing']=global_painter.plot_K_and_parsing
-plot_results['plot_QAm_and_singletO2']=global_painter.plot_QAm_and_singletO2
-plot_results['plot_cum_LEF_singetO2']=global_painter.plot_cum_LEF_singetO2
-plot_results['b6f_and_balance'] = global_painter.b6f_and_balance
+# global_painter = Plotting()
+# plot_results={}
+# plot_results['pmf_params']=global_painter.plot_pmf_params
+# plot_results['pmf_params_offset']=global_painter.plot_pmf_params_offset
+# plot_results['K_and_parsing']=global_painter.plot_K_and_parsing
+# plot_results['plot_QAm_and_singletO2']=global_painter.plot_QAm_and_singletO2
+# plot_results['plot_cum_LEF_singetO2']=global_painter.plot_cum_LEF_singetO2
+# plot_results['b6f_and_balance'] = global_painter.b6f_and_balance
     
 
 class ListTable(list):
@@ -481,111 +483,17 @@ class ListTable(list):
         return ''.join(html)
         
 #display only the constants that are different
-def Changed_Constants_Table(table_title, original_values, Kxx):
-    table = ListTable()
-    table.append(['Changed Parameter', 'Old Value', 'New Value']) #, 'Short Description'])
-    Kdict=Kxx.as_dictionary()
-    original_values_dict=original_values.as_dictionary()
+# def Changed_Constants_Table(table_title, original_values, Kxx):
+#     table = ListTable()
+#     table.append(['Changed Parameter', 'Old Value', 'New Value']) #, 'Short Description'])
+#     Kdict=Kxx.as_dictionary()
+#     original_values_dict=original_values.as_dictionary()
 
-    for key in list(Kdict.keys()):
-        if Kdict[key] == original_values_dict[key]:
-            pass
-        else:
-            table.append([key, original_values_dict[key], Kdict[key]]) #, Ksumm[key]])
-    print(table_title)
-    display(table)
+#     for key in list(Kdict.keys()):
+#         if Kdict[key] == original_values_dict[key]:
+#             pass
+#         else:
+#             table.append([key, original_values_dict[key], Kdict[key]]) #, Ksumm[key]])
+#     print(table_title)
+#     display(table)
 
-#PROCESS A GENOTYPE AND SAVE ITS SIMULATED VALUES
-def process_a_gtype(gtype_dict, parameter_list, out_dict, gtype='a_genotype'):
-    gtype_df = pd.DataFrame([])
-    for para in parameter_list:
-        gtype_dict[para] = out_dict[para]#store in dictionary for further calculation
-        gtype_df[para] = out_dict[para]
-    
-    file_path = './logs/' + gtype + '_simulated.csv'
-    gtype_df.to_csv(file_path)
-   
-def sim_a_gtype(gtype_dict, gtype='WT', light = 100):  
-    parameters_of_interest = ['time_axis','NPQ','Phi2','LEF','qL','Z','V',\
-                          'pmf','Dy','pHlumen','fraction_Dy','fraction_DpH',\
-                          'Klumen','Cl_lumen','Cl_stroma']
-
-    initial_sim_states=sim_states()
-    initial_sim_state_list=initial_sim_states.as_list()
-    Kx_initial=sim_constants()    
-
-    constants_dict={}
-    k_CBC_light = 60 * (light/(light+250))#this needs change with different light intensity    
-
-    output_dict={}
-    on = gtype
-    Kx=sim_constants()
-    if 'clce2' in gtype:
-        Kx.k_CLCE = 0
-    if 'kea3' in gtype:
-        Kx.k_KEA =0
-    if 'vccn1' in gtype:
-        Kx.k_VCCN1 =0
-    Kx.k_CBC = k_CBC_light
-    constants_dict[on]=Kx #store constants in constants_dict
-
-    output_dict=sim_ivp(Kx, initial_sim_state_list, 1200)
-    Changed_Constants_Table('Change Constants', Kx_initial, Kx)
-    output_dict['qL'] = 1-output_dict['QAm']
-    paint = Plotting()
-    paint.plot_interesting_stuff(gtype, output_dict)
-    # plot_interesting_stuff(gtype, output_dict)
-    process_a_gtype(gtype_dict,parameters_of_interest, output_dict,gtype+'_'+str(light)+'uE')    
-
-def do_stuff(LIGHT):
-    print(LIGHT)
-    WT = {}
-    sim_a_gtype(WT, 'WT', LIGHT)
-    kea3 ={}
-    sim_a_gtype(kea3, 'kea3', LIGHT)
-    time_min = WT['time_axis']/60
-    idx = np.argwhere(time_min == 2)[0][0]
-    
-    delta_NPQ = kea3['NPQ']-WT['NPQ']
-    delta_LEF = kea3['LEF']-WT['LEF']
-    
-    # df_list.append(time_min)
-    df_ = {}
-
-    df_['kea3_dNPQ'] = delta_NPQ
-    df_['kea3_dLEF'] = delta_LEF
-    df_['WT_NPQ'] = WT['NPQ']
-    df_['WT_LEF'] = WT['LEF']
-    fig = plt.figure(num=3, figsize=(5,4), dpi=200)
-    plt.plot(time_min[1:],delta_NPQ[1:],label = '∆NPQ: kea3 - WT')
-    plt.legend()
-    plt.show()
-    plt.close()
-    fig = plt.figure(num=3, figsize=(5,4), dpi=200)
-    plt.plot(time_min[1:],delta_LEF[1:],label = '∆LEF: kea3 - WT')
-    plt.legend()
-    plt.show()
-    plt.close()
-    pdindex =pd.Index(WT['time_axis'], name = 'time/s')
-    df_NPQ = pd.DataFrame(df_, index = pdindex)
-    file_path = './logs/' + 'delta_NPQ_LEF' + str(LIGHT) + '_uE_simulated.csv'
-    df_NPQ.to_csv(file_path) 
-    plt.show()
-    plt.close()
-
-    return (delta_NPQ[idx], delta_LEF[idx],\
-            delta_NPQ[idx]/WT['NPQ'][idx], delta_LEF[idx]/WT['LEF'][idx])
-
-global FREQUENCY, LIGHT, T_ATP
-FREQUENCY = 1/60
-result_dict = {}
-light_T = [(50, 200), (100, 165), (250, 100), (500, 60), (1000, 40)]
-for LIGHT, T_ATP in light_T:
-    delta = do_stuff(LIGHT)
-    result_dict[LIGHT] = delta
-col_list = ['dNPQ_2min', 'dLEF_2min', 'dNPQ_rel', 'dLEF_rel']    
-column = {}
-for i, col in enumerate(col_list):
-    column[i] = col
-result_df = pd.DataFrame(result_dict).T
-result_df.rename(columns = column, inplace= True)

@@ -14,7 +14,7 @@ class FrozenClass(object):
 
         
     def as_tuple(self):
-        c=(self.pKreg, self.max_PSII, self.kQA, self.max_b6f, self.lumen_protons_per_turnover, self.light_per_L,
+        c=(self.ratio_absorb, self.pKreg, self.max_PSII, self.kQA, self.max_b6f, self.lumen_protons_per_turnover, self.light_per_L,
         self.ATP_synthase_max_turnover, self.PSII_antenna_size, self.Volts_per_charge, self.perm_K,
         self.n, self.Em7_PQH2, self.Em7_PC, self.Em_Fd, self.PSI_antenna_size, self.buffering_capacity, 
         self.VDE_max_turnover_number, self.pKvde, self.VDE_Hill, self.kZE, self.pKPsbS, self.max_NPQ, 
@@ -23,7 +23,7 @@ class FrozenClass(object):
         return(c)
     
     def as_dictionary(self):
-        d={'pKreg':self.pKreg, 'max_PSII':self.max_PSII,'kQA': self.kQA, 'max_b6f': self.max_b6f, 
+        d={'ratio_absorb':ratio_absorb, 'pKreg':self.pKreg, 'max_PSII':self.max_PSII,'kQA': self.kQA, 'max_b6f': self.max_b6f, 
         'lumen_protons_per_turnover': self.lumen_protons_per_turnover, 'light_per_L':self.light_per_L,
         'ATP_synthase_max_turnover': self.ATP_synthase_max_turnover,  
         'PSII_antenna_size': self.PSII_antenna_size, 'Volts_per_chargese': self.Volts_per_charge, 
@@ -155,6 +155,7 @@ class sim_states(FrozenClass):
 class sim_constants(FrozenClass):
     def __init__(self):
         S=standard_constants()
+        self.ratio_absorb=S.ratio_absorb
         self.pKreg=S.pKreg
         self.max_PSII=S.max_PSII
         self.kQA=S.kQA
