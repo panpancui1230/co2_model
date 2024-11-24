@@ -482,21 +482,6 @@ class ListTable(list):
         html.append("</table>")
         return ''.join(html)
         
-#display only the constants that are different
-# def Changed_Constants_Table(table_title, original_values, Kxx):
-#     table = ListTable()
-#     table.append(['Changed Parameter', 'Old Value', 'New Value']) #, 'Short Description'])
-#     Kdict=Kxx.as_dictionary()
-#     original_values_dict=original_values.as_dictionary()
-
-#     for key in list(Kdict.keys()):
-#         if Kdict[key] == original_values_dict[key]:
-#             pass
-#         else:
-#             table.append([key, original_values_dict[key], Kdict[key]]) #, Ksumm[key]])
-#     print(table_title)
-#     display(table)
-
 #PROCESS A GENOTYPE AND SAVE ITS SIMULATED VALUES
 def process_a_gtype(gtype_dict, parameter_list, out_dict, gtype='a_genotype'):
     gtype_df = pd.DataFrame([])
@@ -507,258 +492,82 @@ def process_a_gtype(gtype_dict, parameter_list, out_dict, gtype='a_genotype'):
     return gtype_df
 
 
-# def sim_a_gtype(gtype_dict, idx=0, light = 100):  
-#     parameters_of_interest = ['time_axis','NPQ','Phi2','LEF','qL','Z','V',\
-#                           'pmf','Dy','pHlumen','fraction_Dy','fraction_DpH',\
-#                           'Klumen','Cl_lumen','Cl_stroma']
+# 全局变量定义
+global FREQUENCY, T_ATP, LIGHT
+FREQUENCY = 1 / 60
+T_ATP = 60
+LIGHT = 100  # 初始化为一个默认值
 
-#     initial_sim_states=sim_states()
-#     initial_sim_state_list=initial_sim_states.as_list()
+def sim_a_gtype(gtype_dict, idx=0,light=100):  
+    global LIGHT  # 引用全局变量 LIGHT
+    parameters_of_interest = ['time_axis', 'NPQ', 'Phi2', 'LEF', 'qL', 'Z', 'V',
+                              'pmf', 'Dy', 'pHlumen', 'fraction_Dy', 'fraction_DpH',
+                              'Klumen', 'Cl_lumen', 'Cl_stroma']
+
+    initial_sim_states = sim_states()
+    initial_sim_state_list = initial_sim_states.as_list()
   
-#     Kx_initial=sim_constants() 
-       
+    Kx_initial = sim_constants()
 
-#     constants_dict={}
-#     k_CBC_light = 60 * (light/(light+250))#this needs change with different light intensity    
+    constants_dict = {}
+    k_CBC_light = 60 * (LIGHT / (LIGHT + 250))  # 根据全局变量 LIGHT 动态计算 k_CBC_light
 
-#     output_dict={}
-#     on = str(idx)
-#     Kx=sim_constants()
-#     # if 'clce2' in gtype:
-#     #     Kx.k_CLCE = 0
-#     # if 'kea3' in gtype:
-#     #     Kx.k_KEA =0
-#     # if 'vccn1' in gtype:
-#     #     Kx.k_VCCN1 =0
-#     Kx.k_CBC = k_CBC_light
-#     csv_file='./data/constants.csv'
-#     data_df = pd.read_csv(csv_file) # get the changing constants dataframe
-#     varying = data_df.loc[idx, data_df.columns[:3]]  # take row index, and first 3 columns
-    
-    
+    output_dict = {}
+    on = str(idx)
+    Kx = sim_constants()
+    Kx.k_CBC = k_CBC_light
 
-#     # now change the constants
-#     Kx.ratio_absorb = varying[0]
-#     # Kx.PSII_content_per_leaf = varying[1]
-#     # Kx.PSII_antenna_size = varying[2]
+    # 从 constants.csv 中获取变化的参数
+    csv_file = './data/constants.csv'
+    data_df = pd.read_csv(csv_file)  # 获取常量数据框
+    varying = data_df.loc[idx, data_df.columns[:3]]  # 获取前 3 列的值
 
-#     # new_scv_file = './data/initial_states.csv'
-#     # data_is = pd.read_csv(new_scv_file)
-#     # print(data_is.columns)
-#     # new_verifying = data_is.loc[idx, data_is.columns[:1]]
-#     # Kx.P700_red_initial = new_verifying[0]
-#     # initial_sim_state_list[0]=new_verifying[0]
+    # 更新常量
+    Kx.ratio_absorb = varying[0]
+    LIGHT = varying[1]  # 第二列是 LIGHT 值，更新全局变量
+    # 打印每次 idx 对应的 ratio_absorb 和 LIGHT
+    print(f"idx {idx}: ratio_absorb = {Kx.ratio_absorb}, LIGHT = {LIGHT}")
+    constants_dict[on] = Kx  # 将更新后的常量存储到字典中
 
-#     # initial_sim_state_list[0] = data_is.loc[idx, 'P700_red_initial']
+    # 运行模拟
+    output_dict = sim_ivp(Kx, initial_sim_state_list, 1200)
+    output_dict['qL'] = output_dict['QA'] / (output_dict['QA'] + output_dict['QAm'])
 
-#     # initial_sim_state_list['P700_red_initial'] = data_is.loc[idx, 'P700_red_initial']
-#     # initial_sim_state_list['QA_content_initial'] = data_is.loc[idx, 'QA_content_initial']
-#     # initial_sim_state_list=initial_sim_states.as_list()
-
-#     # initial_sim_states.P700_red = data_is.loc[idx, 'P700_red_initial']
-#     # initial_sim_states.QA_content = data_is.loc[idx, 'QA_content_initial']
-#     initial_sim_state_list=initial_sim_states.as_list()
-
-#     # initial_sim_state_list[15] = data_is.loc[idx, 'P700_red_initial']
-#     # print(initial_sim_state_list[15])
-    
-#     # Kx.PSII_content_per_leaf = new_verifying[1]
-#     # Kx.PSII_antenna_size = new_verifying[2]
+    # 处理结果，返回 gtype_df，包括 idx, ratio_absorb, LIGHT
+    gtype_df = process_a_gtype(gtype_dict, parameters_of_interest, output_dict, str(idx) + '_' + str(LIGHT) + 'uE')
+    gtype_df['idx'] = idx
+    gtype_df['LIGHT'] = LIGHT
+    gtype_df['ratio_absorb'] = varying[0]
+    return gtype_df
 
 
-    
-#     # 输出当前的 ratio_absorb、PSII_content_per_leaf 和 PSII_antenna_size 值
-#     # print(f"Current parameters for idx {idx}:")
-#     # print(f"ratio_absorb: {Kx.ratio_absorb}")
-#     # print(f"PSII_content_per_leaf: {Kx.PSII_content_per_leaf}")
-#     # print(f"PSII_antenna_size: {Kx.PSII_antenna_size}")
-#     # print(f"P700_red_initial:{initial_sim_state_list[0]}")
-#     # print(f"P700_red_initial")
-
-#     constants_dict[on]=Kx #store constants in constants_dict
-
-#     output_dict=sim_ivp(Kx, initial_sim_state_list, 1200)
-#     # Changed_Constants_Table('Change Constants', Kx_initial, Kx)
-#     # output_dict['qL'] = 1-output_dict['QAm']
-
-#     output_dict['qL'] = output_dict['QA']/(output_dict['QA']+output_dict['QAm'])
-
-
-#     # paint = Plotting()
-#     # paint.plot_interesting_stuff(str(idx), output_dict)
-
-#     # plot_interesting_stuff(gtype, output_dict)
-#     # process_a_gtype(gtype_dict,parameters_of_interest, output_dict, str(idx)+'_'+str(light)+'uE')   
-#     return process_a_gtype(gtype_dict,parameters_of_interest,output_dict,str(idx)+'_'+str(light)+'uE')  
-
-def sim_a_gtype(gtype_dict, gtype='WT', light = 100):  
-    parameters_of_interest = ['time_axis','NPQ','Phi2','LEF','qL','Z','V',\
-                          'pmf','Dy','pHlumen','fraction_Dy','fraction_DpH',\
-                          'Klumen','Cl_lumen','Cl_stroma']
-
-    initial_sim_states=sim_states()
-    initial_sim_state_list=initial_sim_states.as_list()
-    Kx_initial=sim_constants()    
-
-    constants_dict={}
-    k_CBC_light = 60 * (light/(light+250))#this needs change with different light intensity    
-
-    output_dict={}
-    on = gtype
-    Kx=sim_constants()
-    # if 'clce2' in gtype:
-    #     Kx.k_CLCE = 0
-    # if 'kea3' in gtype:
-    #     Kx.k_KEA =0
-    # if 'vccn1' in gtype:
-    #     Kx.k_VCCN1 =0
-    # Kx.k_CBC = k_CBC_light
-    constants_dict[on]=Kx #store constants in constants_dict
-
-    output_dict=sim_ivp(Kx, initial_sim_state_list, 1200)
-    # Changed_Constants_Table('Change Constants', Kx_initial, Kx)
-    output_dict['qL'] = 1-output_dict['QAm']
-    # paint = Plotting()
-    # paint.plot_interesting_stuff(gtype, output_dict)
-    # plot_interesting_stuff(gtype, output_dict)
-    # process_a_gtype(gtype_dict,parameters_of_interest, output_dict,gtype+'_'+str(light)+'uE')    
-    return process_a_gtype(gtype_dict,parameters_of_interest,output_dict,str(idx)+'_'+str(light)+'uE')  
-
-# 修改 do_stuff 函数，累积 1000 个仿真结果并保存到单个 CSV 文件
-# def do_stuff(LIGHT):
-#     print(f"Running simulations for LIGHT intensity: {LIGHT}")
-#     combined_df = pd.DataFrame()  # 用于存储所有 idx 的 gtype_df 数据
-#     for idx in range(840):  # 循环从索引 0 到 999
-#         gtype_dict = {}
-#         gtype_df = sim_a_gtype(gtype_dict, idx=idx, light=LIGHT)  # 获取单个仿真结果的 gtype_df
-#         gtype_df['idx'] = idx  # 添加 idx 列以标识每个组合
-#         combined_df = pd.concat([combined_df, gtype_df], ignore_index=True)  # 累积到 combined_df
-    
-#     # 保存所有 idx 的结果到一个 CSV 文件
-#     combined_df.to_csv(f'./logs_cpp/combined_{LIGHT}_simulated_cpp_6.0.csv', index=False)
-#     print(f"All results for LIGHT {LIGHT} saved to combined_{LIGHT}_simulated_cpp_6.0.csv")
-
-
-# 修改 do_stuff 函数，累积 1000 个仿真结果并保存到单个 CSV 文件
-def do_stuff(LIGHT):
-    print(f"Running simulations for LIGHT intensity: {LIGHT}")
+def do_stuff():  
+    """
+    针对每个 idx 从 CSV 文件读取的 LIGHT 值运行模拟，并保存结果到单个 CSV 文件。
+    """
+    global LIGHT  # 引用全局变量 LIGHT
+    print("Running simulations with LIGHT values from CSV")
     combined_df = pd.DataFrame()  # 用于存储所有 idx 的 gtype_df 数据
-    # error_indices = []
-    for idx in range(181):  # 循环从索引 0 到 839
+
+    # 从 CSV 文件中读取 LIGHT 值
+    csv_file = './data/constants.csv'
+    data_df = pd.read_csv(csv_file)  # 获取常量数据框
+    light_values = data_df.iloc[:, 1].tolist()  # 第二列是 LIGHT 值
+
+    for idx, light in enumerate(light_values):  # 遍历每个 idx 和对应的 LIGHT
         try:
+            LIGHT = light  # 更新全局变量 LIGHT
             gtype_dict = {}
-            gtype_df = sim_a_gtype(gtype_dict, idx=idx, light=LIGHT)  # 获取单个仿真结果的 gtype_df
-            gtype_df['idx'] = idx  # 添加 idx 列以标识每个组合
+            gtype_df = sim_a_gtype(gtype_dict, idx=idx)  # 获取单个仿真结果的 gtype_df
             combined_df = pd.concat([combined_df, gtype_df], ignore_index=True)  # 累积到 combined_df
         except ValueError as e:
             print(f"ValueError at idx {idx}: {e}")
-            # error_indices.append(idx)
-        # except Exception as e:
-        #     print(f"An error occurred at idx {idx}: {e}")
-        #     error_indices.append(idx)
 
     # 保存所有 idx 的结果到一个 CSV 文件
-    combined_df.to_csv(f'./logs_leaf/combined_{LIGHT}_simulated_LIGHT.csv', index=False)
-    print(f"All results for LIGHT {LIGHT} saved to combined_{LIGHT}_simulated_LIGHT.csv")
-
-# global FREQUENCY, LIGHT
-# FREQUENCY = 1/60
-# result_dict = {}
-# # light_T = [(100, 165)]
-# # light_T = [(500, 60)]
-# light_T = [(100, 165),(500, 60)]
-# # light_T = [(50, 200), (100, 165), (250, 100), (500, 60), (1000, 40)]
-# for LIGHT, T_ATP in light_T:
-#     do_stuff(LIGHT)
+    combined_df.to_csv('./logs_500/combined_simulated_dynamic_LIGHT.csv', index=False)
+    print("All results saved to combined_simulated_dynamic_LIGHT.csv")
 
 
-
-# 从 CSV 文件中读取 LIGHT 值
-light_csv_file = './data/ratio_absorb_light.csv'  # 假设文件名为 light_values.csv
-light_df = pd.read_csv(light_csv_file)
-
-# 确保 CSV 文件包含必要的列
-if 'LIGHT' not in light_df.columns:
-    raise ValueError("CSV 文件必须包含 'LIGHT' 列")
-
-global FREQUENCY, LIGHT
-FREQUENCY = 1/60  # 设置全局频率
-T_ATP = 60
-# result_dict = {}
-
-# # 遍历 LIGHT 列中每个值
-# for idx, row in light_df.iterrows():
-#     LIGHT = row['LIGHT']
-#     try:
-#         print(f"Running simulation for idx {idx} with LIGHT intensity: {LIGHT}")
-#         do_stuff(LIGHT)  # 调用 do_stuff 函数进行仿真
-#     except ValueError as e:
-#         print(f"ValueError at idx {idx}: {e}")
-#     except Exception as e:
-#         print(f"An error occurred at idx {idx}: {e}")
-
-# 初始化存储所有仿真结果的 DataFrame
-combined_df = pd.DataFrame()
-
-
-# 遍历 LIGHT 和 ratio_absorb 列中的每一行
-for idx, row in light_df.iterrows():
-    LIGHT = row['LIGHT']
-    ratio_absorb = row['ratio_absorb']
-    try:
-        print(f"Running simulation for idx {idx} with LIGHT={LIGHT}, ratio_absorb={ratio_absorb}")
-        gtype_dict = {}
-
-        # 调用仿真函数，并传入 ratio_absorb 和 LIGHT
-        gtype_df = sim_a_gtype(gtype_dict, light=LIGHT)  # 获取单个仿真结果的 gtype_df
-
-        # 确保返回的 DataFrame 不为空
-        if gtype_df is not None and not gtype_df.empty:
-            gtype_df['idx'] = idx  # 添加 idx 列以标识每个组合
-            gtype_df['LIGHT'] = LIGHT  # 添加 LIGHT 列以追踪
-            gtype_df['ratio_absorb'] = ratio_absorb  # 添加 ratio_absorb 列
-            combined_df = pd.concat([combined_df, gtype_df], ignore_index=True)  # 累积到 combined_df
-        else:
-            print(f"Warning: Simulation for idx {idx} returned empty or None.")
-    except ValueError as e:
-        print(f"ValueError at idx {idx}: {e}")
-    except Exception as e:
-        print(f"An error occurred at idx {idx}: {e}")
-
-# 检查 combined_df 是否为空
-if combined_df.empty:
-    print("No valid results were generated. Exiting.")
-else:
-    # 保存所有结果到一个 CSV 文件
-    output_file = './logs_leaf/combined_simulated_light_ratio.csv'
-    combined_df.to_csv(output_file, index=False)
-    print(f"All results saved to {output_file}")
-
-# # 遍历 LIGHT 列中每个值
-# for idx, row in light_df.iterrows():
-#     LIGHT = row['LIGHT']
-#     try:
-#         print(f"Running simulation for idx {idx} with LIGHT intensity: {LIGHT}")
-#         gtype_dict = {}
-#         gtype_df = sim_a_gtype(gtype_dict, idx=idx, light=LIGHT)  # 获取单个仿真结果的 gtype_df
-
-#         # 检查是否成功返回结果
-#         if gtype_df is not None and not gtype_df.empty:
-#             gtype_df['idx'] = idx  # 添加 idx 列以标识每个组合
-#             gtype_df['LIGHT'] = LIGHT  # 添加 LIGHT 列以追踪
-#             combined_df = pd.concat([combined_df, gtype_df], ignore_index=True)  # 累积到 combined_df
-#         else:
-#             print(f"Warning: Simulation for idx {idx} returned empty or None.")
-#     except ValueError as e:
-#         print(f"ValueError at idx {idx}: {e}")
-#     except Exception as e:
-#         print(f"An error occurred at idx {idx}: {e}")
-
-# # 检查 combined_df 是否为空
-# if combined_df.empty:
-#     print("No valid results were generated. Exiting.")
-# else:
-#     # 保存所有 LIGHT 的结果到一个 CSV 文件
-#     output_file = './logs_leaf/combined_simulated_all_lights.csv'
-#     combined_df.to_csv(output_file, index=False)
-#     print(f"All results saved to {output_file}")
+# 执行模拟
+do_stuff()
+print(f"Final LIGHT value after simulation: {LIGHT}")

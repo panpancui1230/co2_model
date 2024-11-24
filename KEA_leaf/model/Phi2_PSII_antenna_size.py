@@ -1,7 +1,7 @@
 import pandas as pd
 
 # Load the data
-df = pd.read_csv('./logs_leaf/2000_ATP_made.csv')  # Replace with your actual file path
+df = pd.read_csv('./logs_500/2000_ATP_made.csv')  # Replace with your actual file path
 
 # df = df.apply(pd.to_numeric, errors='coerce').fillna(0)
 
@@ -16,6 +16,6 @@ df['2NADPH']=df['NADPH']/2
 # df = df.drop(columns=['2_v_ATP_made'])
 # print("Column '2_v_ATP_made' has been removed.")
 # # Save the modified dataframe to a new CSV file
-df.to_csv('./logs_leaf/2000_ATP_made.csv', index=False)
+df.to_csv('./logs_500/2000_ATP_made.csv', index=False)
 
 print("Calculation completed and saved to 'modified_file_with_results.csv'")
