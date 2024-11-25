@@ -17,10 +17,10 @@ import csv
 import warnings
 
 from painter import Plotting
-from utils import standard_constants
-from utils import standard_initial_states
-from utils import sim_states
-from utils import sim_constants
+from model.utils_copy import standard_constants
+from model.utils_copy import standard_initial_states
+from model.utils_copy import sim_states
+from model.utils_copy import sim_constants
 
 from calc import block
 
@@ -67,7 +67,7 @@ points_per_segment=1000
 
 
 #Function f calculates the changes in state for the entire systems
-def f(t, y, ratio_absorb,pKreg, max_PSII, kQA, max_b6f, lumen_protons_per_turnover, PAR, ATP_synthase_max_turnover, 
+def f(t, y, ratio_absorb,LIGHT,pKreg, max_PSII, kQA, max_b6f, lumen_protons_per_turnover, PAR, ATP_synthase_max_turnover, 
     PSII_antenna_size, Volts_per_charge, perm_K, n, Em7_PQH2, Em7_PC,Em_Fd, PSI_antenna_size, 
     buffering_capacity, VDE_max_turnover_number, pKvde, VDE_Hill, kZE, pKPsbS, max_NPQ, k_recomb, k_PC_to_P700, 
     triplet_yield, triplet_to_singletO2_yield, fraction_pH_effect, k_Fd_to_NADP, k_CBC, k_KEA, k_VCCN1, k_CLCE, k_NDH): 
@@ -244,7 +244,7 @@ def sim_ivp(K, initial_states, t_end):
     return output
 
 def do_complete_sim(y00, t_end, Kx):
-
+    LIGHT=Kx.LIGHT
     computer = block()
     sun = sunshine()
     
@@ -493,13 +493,16 @@ def process_a_gtype(gtype_dict, parameter_list, out_dict, gtype='a_genotype'):
 
 
 # 全局变量定义
-global FREQUENCY, T_ATP, LIGHT
+# global FREQUENCY, T_ATP, LIGHT
+global FREQUENCY, T_ATP
 FREQUENCY = 1 / 60
 T_ATP = 60
-LIGHT = 100  # 初始化为一个默认值
+# LIGHT = 100  # 初始化为一个默认值
 
-def sim_a_gtype(gtype_dict, idx=0,light=100):  
-    global LIGHT 
+def sim_a_gtype(gtype_dict, idx, light, data_df):
+    """
+    单次仿真函数，根据 idx 和 light 值运行仿真。
+    """
     parameters_of_interest = ['time_axis', 'NPQ', 'Phi2', 'LEF', 'qL', 'Z', 'V',
                               'pmf', 'Dy', 'pHlumen', 'fraction_Dy', 'fraction_DpH',
                               'Klumen', 'Cl_lumen', 'Cl_stroma']
@@ -507,66 +510,55 @@ def sim_a_gtype(gtype_dict, idx=0,light=100):
     initial_sim_states = sim_states()
     initial_sim_state_list = initial_sim_states.as_list()
   
-    Kx_initial = sim_constants()
-
-    constants_dict = {}
-    k_CBC_light = 60 * (LIGHT / (LIGHT + 250))  # 根据全局变量 LIGHT 计算 k_CBC_light
-
-    output_dict = {}
-    on = str(idx)
+    # 从 constants.csv 中获取常量
+    if idx >= len(data_df):
+        raise ValueError(f"Invalid idx {idx}: Out of range for constants file.")
+    varying = data_df.iloc[idx]
+  
+    # 初始化常量
     Kx = sim_constants()
-    Kx.k_CBC = k_CBC_light
+    Kx.k_CBC = 60 * (light / (light + 250))
+    Kx.ratio_absorb = varying['ratio_absorb']  # 使用 CSV 文件中的 ratio_absorb
 
-    # 从 constants.csv 中获取变化的参数
-    csv_file = './data/constants.csv'
-    data_df = pd.read_csv(csv_file)  
-    varying = data_df.loc[idx, data_df.columns[:3]] 
-
-    # 更新常量
-    Kx.ratio_absorb = varying[0]
-    LIGHT = varying[1]  # 第二列是 LIGHT 值
-
-    print(f"idx {idx}: ratio_absorb = {Kx.ratio_absorb}, LIGHT = {LIGHT},k_CBC={Kx.k_CBC}")
-    constants_dict[on] = Kx  
+    print(f"Running idx {idx}: ratio_absorb = {Kx.ratio_absorb}, LIGHT = {light}, k_CBC = {Kx.k_CBC}")
 
     # 运行模拟
     output_dict = sim_ivp(Kx, initial_sim_state_list, 1200)
     output_dict['qL'] = output_dict['QA'] / (output_dict['QA'] + output_dict['QAm'])
 
-    # 处理结果，返回 gtype_df，包括 idx, ratio_absorb, LIGHT
-    gtype_df = process_a_gtype(gtype_dict, parameters_of_interest, output_dict, str(idx) + '_' + str(LIGHT) + 'uE')
+    # 处理结果
+    gtype_df = process_a_gtype(gtype_dict, parameters_of_interest, output_dict, f"{idx}_{light}uE")
     gtype_df['idx'] = idx
-    gtype_df['LIGHT'] = LIGHT
-    gtype_df['ratio_absorb'] = varying[0]
+    gtype_df['LIGHT'] = light
+    gtype_df['ratio_absorb'] = varying['ratio_absorb']
     return gtype_df
 
-
-def do_stuff():  
+def do_stuff(input_file='./data/constants.csv', output_file='./logs_copy/combined_simulated_dynamic_LIGHT.csv'):
     """
-    针对每个 idx 从 CSV 文件读取的 LIGHT 值运行模拟，并保存结果到单个 CSV 文件。
+    针对每个 idx 运行仿真，并将结果保存到单个 CSV 文件。
     """
-    global LIGHT 
-    print("Running simulations with LIGHT values from CSV")
-    combined_df = pd.DataFrame()  
-    # 从 CSV 文件中读取 LIGHT 值
-    csv_file = './data/constants.csv'
-    data_df = pd.read_csv(csv_file)  
-    light_values = data_df.iloc[:, 1].tolist()  # 第二列是 LIGHT 值
+    print(f"Reading constants from {input_file}...")
+    try:
+        data_df = pd.read_csv(input_file)
+        if 'ratio_absorb' not in data_df.columns or 'LIGHT' not in data_df.columns:
+            raise ValueError("Input CSV must contain 'ratio_absorb' and 'LIGHT' columns.")
+    except FileNotFoundError:
+        print(f"Error: Input file {input_file} not found.")
+        return
 
-    for idx, light in enumerate(light_values):  # 遍历每个 idx 和对应的 LIGHT
+    combined_df = pd.DataFrame()
+
+    for idx in range(len(data_df)):  # 遍历所有 idx
         try:
-            LIGHT = light  # 更新全局变量 LIGHT
+            light = data_df.iloc[idx]['LIGHT']  # 从 CSV 文件中读取 LIGHT
             gtype_dict = {}
-            gtype_df = sim_a_gtype(gtype_dict, idx=idx)  
-            combined_df = pd.concat([combined_df, gtype_df], ignore_index=True)  
-        except ValueError as e:
-            print(f"ValueError at idx {idx}: {e}")
+            gtype_df = sim_a_gtype(gtype_dict, idx, light, data_df)
+            combined_df = pd.concat([combined_df, gtype_df], ignore_index=True)
+        except Exception as e:
+            print(f"Error at idx {idx}: {e}")
 
-    # 保存所有 idx 的结果到一个 CSV 文件
-    combined_df.to_csv('./logs_500/combined_simulated_dynamic_LIGHT_copy.csv', index=False)
-    print("All results saved to combined_simulated_dynamic_LIGHT.csv")
+    combined_df.to_csv(output_file, index=False)
+    print(f"All results saved to {output_file}")
 
-
-# 模拟
+# 执行仿真
 do_stuff()
-print(f"Final LIGHT value after simulation: {LIGHT}")

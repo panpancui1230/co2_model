@@ -563,7 +563,7 @@ def do_stuff():
             print(f"ValueError at idx {idx}: {e}")
 
     # 保存所有 idx 的结果到一个 CSV 文件
-    combined_df.to_csv('./logs_500/combined_simulated_dynamic_LIGHT_copy.csv', index=False)
+    combined_df.to_csv('./logs_500/combined_simulated_dynamic_LIGHT.csv', index=False)
     print("All results saved to combined_simulated_dynamic_LIGHT.csv")
 
 
