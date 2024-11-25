@@ -526,7 +526,7 @@ def sim_a_gtype(gtype_dict, idx=0,light=100):
     Kx.ratio_absorb = varying[0]
     LIGHT = varying[1]  # 第二列是 LIGHT 值，更新全局变量
     # 打印每次 idx 对应的 ratio_absorb 和 LIGHT
-    print(f"idx {idx}: ratio_absorb = {Kx.ratio_absorb}, LIGHT = {LIGHT}")
+    print(f"idx {idx}: ratio_absorb = {Kx.ratio_absorb}, LIGHT = {LIGHT},k_CBC={Kx.k_CBC}")
     constants_dict[on] = Kx  # 将更新后的常量存储到字典中
 
     # 运行模拟

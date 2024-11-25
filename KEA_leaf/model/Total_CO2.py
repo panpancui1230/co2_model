@@ -1,7 +1,7 @@
 import pandas as pd
 
 # 读取CSV文件
-input_file = "./logs_leaf/2000_CO2.csv"  # 替换为实际路径
+input_file = "./logs_500/2000_CO2.csv"  # 替换为实际路径
 data = pd.read_csv(input_file)
 
 # 确保文件中包含 'ratio_absorb' 和 'CO2' 列
@@ -24,7 +24,7 @@ for ratio in ratios:
 result_df = pd.DataFrame(result_dict)
 
 # 输出结果到CSV文件
-output_file = "./logs_leaf/CO2_sum_by_ratio_absorb.csv"
+output_file = "./logs_500/CO2_sum_by_ratio_absorb.csv"
 result_df.to_csv(output_file, index=False)
 
 print(f"计算完成，结果已保存到文件: {output_file}")
