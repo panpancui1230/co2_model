@@ -3,7 +3,7 @@ import pandas as pd
 import matplotlib.pyplot as plt
 
 # Load the CSV file
-file_path = './logs_500/500_CO2_plt.csv'
+file_path = './logs_2/2000_CO2_plt.csv'
 data = pd.read_csv(file_path)
 
 # Extract unique values for `ratio_absorb`

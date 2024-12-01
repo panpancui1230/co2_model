@@ -6,7 +6,7 @@ file_path = './logs_500/500_CO2_plt.csv'
 data = pd.read_csv(file_path)
 
 # Filter data to include only rows where '叶片数' <= 10
-filtered_data = data[data['叶片数'] <= 10]
+filtered_data = data[data['叶片数'] <= 45]
 
 # Extract unique values for `ratio_absorb`
 unique_ratios = filtered_data['ratio_absorb'].unique()
@@ -35,7 +35,7 @@ for ratio in unique_ratios:
              marker='o', linewidth=2, color=colors[ratio])
 
 # Set x-axis limit to show the range [0, 12]
-plt.xlim(0, 12)
+plt.xlim(0, 50)
 
 # Add labels, title, legend, and grid
 plt.xlabel('Number of leaves', fontsize=14)
