@@ -51,9 +51,9 @@ class block:
         NADPH_CBC = min([NADPH_CBC_ATP,NADPH_CBC_t])
         return NADPH_CBC
             
-    def Calc_Phi2(self, QA, NPQ):
-        Phi2=1/(1+(1+NPQ)/(4.88*QA))
-        return Phi2
+    # def Calc_Phi2(self, QA, NPQ):
+    #     Phi2=1/(1+(1+NPQ)/(4.88*QA))
+    #     return Phi2
 
     def Calc_PhiNO_PhiNPQ(self, Phi2, QA, NPQ):
         PhiNO=1/(1+NPQ + ((Phi2+NPQ)/(1-Phi2)))
