@@ -71,10 +71,10 @@ def f(t, y, pKreg, max_PSII, kQA, max_b6f, lumen_protons_per_turnover, PAR, ATP_
     PSII_antenna_size, Volts_per_charge, perm_K, n, Em7_PQH2, Em7_PC,Em_Fd, PSI_antenna_size, 
     buffering_capacity, VDE_max_turnover_number, pKvde, VDE_Hill, kZE, pKPsbS, max_NPQ, k_recomb, k_PC_to_P700, 
     triplet_yield, triplet_to_singletO2_yield, fraction_pH_effect, k_Fd_to_NADP, k_CBC, k_KEA, k_VCCN1, k_CLCE, k_NDH): 
-    sun = sunshine()
+    sun = 0
     #The following are holders for paramters for testing internal functions of f
-    PAR = sun.light(t, 1200, LIGHT, FREQUENCY, 900, 100)
-    light_per_L=0.84 * PAR/0.7
+    PAR = 0
+    light_per_L=0
 
 
     computer = block()
@@ -82,57 +82,57 @@ def f(t, y, pKreg, max_PSII, kQA, max_b6f, lumen_protons_per_turnover, PAR, ATP_
     PC_ox, PC_red, P700_ox, P700_red, Z, V, NPQ, singletO2, Phi2, LEF, Fd_ox, Fd_red,\
     ATP_pool, ADP_pool, NADPH_pool, NADP_pool,Cl_lumen, Cl_stroma, Hstroma, pHstroma =y
     
-    PSII_recombination_v=computer.recombination_with_pH_effects(k_recomb, QAm, Dy, pHlumen, fraction_pH_effect)
-    dsingletO2=PSII_recombination_v*triplet_yield*triplet_to_singletO2_yield
+    PSII_recombination_v=0
+    dsingletO2=0
 
     #calculate pmf from Dy and deltapH 
     pmf=Dy + 0.06*(pHstroma-pHlumen)
 
-    Phi2=computer.Calc_Phi2(QA, NPQ) #I use the current' value of NPQ. I then calculate the difference below 
+    Phi2=0 #I use the current' value of NPQ. I then calculate the difference below 
 
-    PSII_charge_separations=PSII_antenna_size*light_per_L * Phi2
+    PSII_charge_separations=0
     
     
     Keq_QA_PQ=200
     
     #calculate the changes in QA redox state based on the number of charge separations and equilibration with 
     #the PQ pool
-    dQAm = PSII_charge_separations  + PQH2*QA*kQA/Keq_QA_PQ  - QAm * PQ * kQA - PSII_recombination_v
-    dQA = -1*dQAm
+    dQAm =0
+    dQA = 0
 
     b6f_content=0.433 #Journal of Experimental Botany, Vol. 65, No. 8, pp. 1955–1972, 2014
 
-    v_b6f=computer.calc_v_b6f(max_b6f, b6f_content, pHlumen, pKreg, PQ, PQH2, PC_ox, PC_red, Em7_PC, Em7_PQH2, pmf)
+    v_b6f= 0
     
-    v_NDH = computer.calc_v_NDH(Em_Fd, Em7_PQH2, pHstroma, pmf, k_NDH, Fd_red, Fd_ox, PQ, PQH2)
-    d_Hlumen_NDH = v_NDH*2 #change in lumen protons
+    v_NDH = 0
+    d_Hlumen_NDH = 0 #change in lumen protons
     d_charge_NDH = d_Hlumen_NDH # change in charges across the membrane
     #d_Hstroma_NDH = v_NDH*3 # change in stroma protons
     
     ##PGR regulation, attempted
     PGR_vmax = 0#It seems this function does not impact the kinetics much.
-    v_PGR = computer.calc_v_PGR(PGR_vmax, Fd_red, PQ, PQH2)
+    v_PGR = 0
 
     #calculate the change in PQH2 redox state considering the following:
     #PQ + QAm --> PQH2 + QA ; PQH2 + b6f --> PQ    
-    PSI_charge_separations= P700_red * light_per_L * PSI_antenna_size * Fd_ox
+    PSI_charge_separations=0
 
-    dPQH2 = (QAm * PQ * kQA + v_NDH + v_PGR - v_b6f - PQH2*QA*kQA/Keq_QA_PQ)*0.5 
-    dPQ = -1*dPQH2
+    dPQH2 = 0
+    dPQ = 0
     
     
     #P700 reactions
-    d_P700_ox = PSI_charge_separations - PC_red * k_PC_to_P700 * P700_ox
-    d_P700_red=-1*d_P700_ox
+    d_P700_ox = 0
+    d_P700_red=0
     
     #PC reactions:
-    d_PC_ox = PC_red * k_PC_to_P700 * P700_ox - v_b6f
-    d_PC_red = -1*d_PC_ox
+    d_PC_ox = 0
+    d_PC_red = 0
     
     #Mehler reaction, V_me = kme * [O2]*Fd_red/(Fd_red+Fd_ox), Hui Lyu and Dusan Lazar modeling...
-    V_me = 4*0.000265*Fd_red/(Fd_red+Fd_ox)
-    dFd_red=PSI_charge_separations - k_Fd_to_NADP*Fd_red*NADP_pool - v_NDH - v_PGR -V_me
-    dFd_ox=-1*dFd_red
+    V_me = 0
+    dFd_red= 0
+    dFd_ox= 0
 
     Hlumen = 10**(-1*pHlumen)
     Hstroma = 10**(-1*pHstroma)
@@ -144,28 +144,26 @@ def f(t, y, pKreg, max_PSII, kQA, max_b6f, lumen_protons_per_turnover, PAR, ATP_
         
     d_ATP_made=d_protons_to_ATP/n                                        
 
-    NADPH_CBC = k_CBC*(1.0-np.exp(-t/900))*(np.log(NADPH_pool/NADP_pool)-np.log(1.25))/(np.log(3.5/1.25))#calc_CBC_NADPH(k_CBC, t, d_ATP_made)
+    NADPH_CBC = 0
     #this number in "np.exp(-t/600)" is important, which impacts the shape of the curves
     dNADPH_pool=0.5 * k_Fd_to_NADP*NADP_pool*Fd_red - NADPH_CBC
     dNADP_pool=-1*dNADPH_pool
     
-    dLEF=k_Fd_to_NADP*NADP_pool*Fd_red
+    dLEF= 0
     
     d_ATP_consumed = d_ATP_made#NADPH_CBC*5/3 + (ATP_pool/(ADP_pool+ATP_pool)-0.5)*1.2#ATP_pool*(ATP_pool/ADP_pool-1)  
-    d_protons_from_PSII = PSII_charge_separations - PSII_recombination_v
+    d_protons_from_PSII = 0
 
     #calculate the contributions to Dy from PSII
-    charges_from_PSII = PSII_charge_separations - PSII_recombination_v
+    charges_from_PSII = 0
     
+    d_protons_from_b6f = 0 #two protons per electron transferred from PQH2 to PC
 
-    d_protons_from_b6f = v_b6f*2 #two protons per electron transferred from PQH2 to PC
-
-
-    charges_from_b6f = v_b6f
+    charges_from_b6f = 0
      
     #add up the changes in protons delivered to lumen
     #note: net_protons_in is the total number of protons input into the lumen, including both free and bound.
-    net_protons_in = d_protons_from_PSII + d_protons_from_b6f + d_Hlumen_NDH - d_H_ATP_or_passive
+    net_protons_in = 0
    
     
     f_actvt = computer.KEA_reg(pHlumen, QAm)
@@ -187,7 +185,7 @@ def f(t, y, pKreg, max_PSII, kQA, max_b6f, lumen_protons_per_turnover, PAR, ATP_
     net_Cl_lumen_in = v_VCCN1 + 2*v_CLCE
     dCl_lumen = net_Cl_lumen_in * lumen_protons_per_turnover
     dCl_stroma = -0.1*dCl_lumen
-    
+   
 
     dHin = (net_protons_in - v_KEA - v_CLCE)*lumen_protons_per_turnover
     dpHlumen= -1*dHin / buffering_capacity 
@@ -195,23 +193,23 @@ def f(t, y, pKreg, max_PSII, kQA, max_b6f, lumen_protons_per_turnover, PAR, ATP_
     dHstroma = 0#(net_protons_stroma + v_KEA + v_CLCE)*lumen_protons_per_turnover/10
     #Assuming the volume of stroma is ten times as that of lumen
     dpHstroma = -1*dHstroma / buffering_capacity
-    delta_charges=charges_from_PSII+PSI_charge_separations + charges_from_b6f \
-                    + d_charge_NDH - v_K_channel - d_H_ATP_or_passive - v_VCCN1-3*v_CLCE
+    delta_charges=0
     
-    dDy=delta_charges*Volts_per_charge
+    dDy=0
     dpmf= 0.06* dpHlumen + dDy
+
 
     dATP_pool= d_ATP_made - d_ATP_consumed
     dADP_pool= - dATP_pool
     
-    dZ, dV = computer.calc_v_VDE(VDE_max_turnover_number, pKvde, VDE_Hill, kZE, pHlumen, V, Z)
+    dZ, dV = 0
 
     
-    new_PsbS_H = computer.calc_PsbS_Protonation(pKPsbS, pHlumen + dpHlumen)
-    new_Z=Z+dZ
+    new_PsbS_H = 0
+    new_Z=0
     
-    new_NPQ=0.4*max_NPQ*new_PsbS_H*new_Z+0.5*max_NPQ*new_PsbS_H+0.1*max_NPQ*new_Z
-    dNPQ=new_NPQ-NPQ #new_PsbS_H-PsbS_H
+    new_NPQ=0
+    dNPQ=0 #new_PsbS_H-PsbS_H
     dPhi2=0 #
 
     ddeltaGatp = 0
@@ -267,7 +265,7 @@ def do_complete_sim(y00, t_end, Kx):
 
     # save the results in case we want to start another simulation that starts where this one left off
     end_state = list(soln.y[:,-1])
-    
+
     Dy = output['Dy']
     pHlumen = output['pHlumen']
     pHstroma = output['pHstroma']
