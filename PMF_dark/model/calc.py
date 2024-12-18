@@ -23,6 +23,7 @@ class block:
         f_PQ=1-f_PQH2
         v_b6f=f_PQH2*PC_ox*k_b6f - f_PQ*PC_red*k_b6f_reverse 
         return(v_b6f)
+
     
     def calc_v_NDH(self, Em_Fd, Em7_PQH2, pHstroma, pmf, k_NDH, Fd_red, Fd_ox, PQ, PQH2):
         Em_PQH2 = Em7_PQH2 - 0.06*(pHstroma - 7.0)
