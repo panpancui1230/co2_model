@@ -28,17 +28,19 @@ def f(t, y, lumen_protons_per_turnover, ATP_synthase_max_turnover, Volts_per_cha
       n, buffering_capacity, k_KEA, k_VCCN1, k_CLCE):
     computer = block()
 
-    Hin,pHlumen, Dy, pmf, Klumen, Kstroma, Cl_lumen, Cl_stroma, Hstroma, pHstroma=y
+    # pHlumen, Dy, pmf, Klumen, Kstroma, Cl_lumen, Cl_stroma, Hstroma, pHstroma=y
+    pHlumen, Dy, pmf, Klumen, Kstroma, ATP_made, ATP_pool, ADP_pool, Cl_lumen, Cl_stroma,Hstroma, pHstroma = y
+
 
     #pmf计算
-    pmf=Dy + 0.06*(pHstroma-pHlumen)
+    # pmf=Dy + 0.06*(pHstroma-pHlumen) 
 
     #KEA3
     Hlumen = 10**(-1*pHlumen)
     Hstroma = 10**(-1*pHstroma)
     v_KEA = k_KEA*(Hlumen*Kstroma -  Hstroma*Klumen)
    
-    #V_K
+    #V_K 可能要加调控
     K_deltaG=-0.06*np.log10(Kstroma/Klumen) + Dy
     v_K_channel = perm_K * K_deltaG*(Klumen+Kstroma)/2
     
@@ -61,12 +63,12 @@ def f(t, y, lumen_protons_per_turnover, ATP_synthase_max_turnover, Volts_per_cha
 
     # dATP
     # activity = computer.ATP_synthase_actvt(t, T_ATP)
-    activity = computer.ATP_synthase_actvt(t, 300)
+    # activity = computer.ATP_synthase_actvt(t, 200)
     d_protons_to_ATP = computer.Vproton_pmf_actvt(pmf, activity, ATP_synthase_max_turnover, n)
-    d_ATP_made=d_protons_to_ATP/n 
-    d_ATP_consumed = d_ATP_made
-    dATP_pool= d_ATP_made - d_ATP_consumed
-    dADP_pool= - dATP_pool
+    # d_ATP_made=d_protons_to_ATP/n 
+    # d_ATP_consumed = d_ATP_made
+    # dATP_pool= d_ATP_made - d_ATP_consumed
+    # dADP_pool= - dATP_pool
 
     #dpHlumen
     # d_H_ATP_or_passive = computer.V_H_light(light_per_L, d_protons_to_ATP, pmf, Hlumen)      
@@ -85,9 +87,5 @@ def f(t, y, lumen_protons_per_turnover, ATP_synthase_max_turnover, Volts_per_cha
 
     #dpmf
     dpmf= 0.06* dpHlumen + dDy
- 
-    # return [dpHlumen, dDy, dpmf, dKlumen, dKstroma, dCl_lumen, dCl_stroma, dHstroma, dpHstroma]
 
-    return [dHin, dpHlumen, dDy, dpmf, dKlumen, dKstroma, 
-            d_ATP_made, dATP_pool, dADP_pool, dCl_lumen, dCl_stroma,dHstroma, dpHstroma]
-# pHlumen, Dy, pmf, Klumen, Kstroma, Cl_lumen, Cl_stroma, Hstroma, pHstroma=y
+    return [dpHlumen, dDy, dpmf, dKlumen, dKstroma, dCl_lumen, dCl_stroma,dHstroma, dpHstroma]
