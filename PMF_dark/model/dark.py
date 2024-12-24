@@ -24,13 +24,49 @@ from utils import sim_constants
 from calc import block
 # from sun_sim import sunshine
 
+
+species_labels = [
+    'QA', # 0
+    'QAm', #1 
+    'PQ', #2
+    'PQH2', #3
+    'Hin', #4
+    'pHlumen', #5
+    'Dy', #6
+    'pmf', #7
+    'DeltaGatp', #8
+    'Klumen', #9
+    'Kstroma', #10
+    'ATP_made', #11
+    'PC_ox', #12
+    'PC_red', #13
+    'P700_ox', #14
+    'P700_red', #15
+    'Z_array', #16
+    'V_array', #17
+    'NPQ_array', #18
+    'singletO2_array', #19
+    'Phi2_array', #20
+    'LEF_array', #21
+    'Fd_ox',
+    'Fd_red',
+    'ATP_pool',
+    'ADP_pool',
+    'NADPH_pool',
+    'NADP_pool',
+    'Cl_lumen',
+    'Cl_stroma',
+    'Hstroma',
+    'pHstroma'
+    ]
+
+
 def f(t, y, lumen_protons_per_turnover, ATP_synthase_max_turnover, Volts_per_charge, perm_K,
       n, buffering_capacity, k_KEA, k_VCCN1, k_CLCE):
     computer = block()
 
-    # pHlumen, Dy, pmf, Klumen, Kstroma, Cl_lumen, Cl_stroma, Hstroma, pHstroma=y
-    pHlumen, Dy, pmf, Klumen, Kstroma, ATP_made, ATP_pool, ADP_pool, Cl_lumen, Cl_stroma,Hstroma, pHstroma = y
-
+    pHlumen, Dy, pmf, Klumen, Kstroma, Cl_lumen, Cl_stroma, Hstroma, pHstroma=y
+    # pHlumen, Dy, pmf, Klumen, Kstroma, ATP_made, ATP_pool, ADP_pool, Cl_lumen, Cl_stroma,Hstroma, pHstroma = y
 
     #pmf计算
     # pmf=Dy + 0.06*(pHstroma-pHlumen) 
@@ -63,7 +99,7 @@ def f(t, y, lumen_protons_per_turnover, ATP_synthase_max_turnover, Volts_per_cha
 
     # dATP
     # activity = computer.ATP_synthase_actvt(t, T_ATP)
-    # activity = computer.ATP_synthase_actvt(t, 200)
+    activity = computer.ATP_synthase_actvt(t, 200)
     d_protons_to_ATP = computer.Vproton_pmf_actvt(pmf, activity, ATP_synthase_max_turnover, n)
     # d_ATP_made=d_protons_to_ATP/n 
     # d_ATP_consumed = d_ATP_made
@@ -89,3 +125,36 @@ def f(t, y, lumen_protons_per_turnover, ATP_synthase_max_turnover, Volts_per_cha
     dpmf= 0.06* dpHlumen + dDy
 
     return [dpHlumen, dDy, dpmf, dKlumen, dKstroma, dCl_lumen, dCl_stroma,dHstroma, dpHstroma]
+
+
+# 模拟函数
+def simulate(initial_states, t_span, params):
+    sol = solve_ivp(f, t_span, initial_states, args=params, method='BDF', dense_output=True)
+    return sol
+
+# 数据处理与绘图
+def plot_results(sol, labels):
+    """绘制模拟结果"""
+    time = sol.t
+    results = sol.y
+
+    plt.figure(figsize=(12, 8))
+    for i, label in enumerate(labels):
+        plt.plot(time, results[i], label=label)
+    plt.xlabel('Time (s)')
+    plt.ylabel('Concentration/Gradient')
+    plt.title('Simulation Results')
+    plt.legend()
+    plt.show()
+
+
+
+# 设置初始条件和参数
+initial_states = [7.8, 0.0, 0.0, 0.1, 0.1, 0.04, 0.04, 0.0, 7.8]
+params = (0.000587, 200.0, 0.047, 150, 4.666, 0.03, 2500000, 12, 800000) 
+t_span = (0, 1200)  # 模拟时间范围
+
+# 运行模拟并绘制结果
+species_labels = ['pHlumen', 'Dy', 'pmf', 'Klumen', 'Kstroma', 'Cl_lumen', 'Cl_stroma', 'Hstroma', 'pHstroma']
+sol = simulate(initial_states, t_span, params)
+plot_results(sol, species_labels)
