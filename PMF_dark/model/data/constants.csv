@@ -1,2 +1,2 @@
-VDE_max_turnover_number,pKvde,VDE_Hill,kZE,pKPsbS,max_NPQ,pHstroma_initial,ATP_synthase_content,ATP_synthase_max_turnover,Thylakoid_membrane_capacitance,Volts_per_charge,c_subunits_per_ATP_synthase,n,perm_K,k_VCCN1,k_CLCE,max_b6f,pKreg,Em7_PC,Em7_PQH2,Em_Fd,k_NDH,lumen_protons_per_turnover,buffering_capacity,PSI_antenna_size,k_PC_to_P700,k_KEA,max_PSII,PSII_antenna_size,kQA,k_recomb,triplet_yield,triplet_to_singletO2_yield,light_per_L,k_Fd_to_NADP,k_CBC
-0.08,5.65,4,0.004,6.2,3,7.8,0.367,200.0,0.6,0.047,14,4.666666666666667,150,12,800000,300.0,6.2,0.37,0.11,-0.42,1000.0,0.000587,0.014,0.5,5000,2500000,1,0.5,1000,0.33,0.45,1,0,1000,60
+lumen_protons_per_turnover,ATP_synthase_max_turnover,Volts_per_charge,perm_K,n,buffering_capacity,k_KEA,k_VCCN1,k_CLCE
+0.000587,200,0.047,150,4.666,0.03,2500000,12,800000

@@ -1,2 +1,2 @@
-V_initial,Z_initial,ATP_made_initial,DeltaGatp_initial,Klumen_initial,Kstroma_initial,Cl_lumen_initial,Cl_stroma_initial,n,pmf_initial,pHstroma_initial,pHlumen_initial,Dy_initial,LEF_initial,Phi2_initial,buffering_capacity,Hin_initial,Hstroma_initial,QA_content_initial,QAm_content_initial,PQH2_content_initial,PQ_content_initial,PC_ox_initial,PC_red_initial,P700_ox_initial,P700_red_initial,PSI_content,PSI_antenna_size,Fd_ox_initial,Fd_red_initial,NPQ_initial,singletO2_initial,ATP_pool_initial,ADP_pool_initial,NADPH_pool_initial,NADP_pool_initial
-1.0,0.0,0,45.86558801693249,0.1,0.1,0.04,0.04,4.666,0.0,7.8,7.8,0.0,0,0.83,0.03,0.0,0.0,1,0,0,7,0,2,0.0,0.667,0.667,0.5,1,0,0,0,4.15,4.15,1.5,3.5
+pHlumen,Dy,pmf,Klumen,Kstroma,Cl_lumen,Cl_stroma,Hstroma,pHstroma
+7.8,0,0,0.1,0.1,0.04,0.04,0,7.8
