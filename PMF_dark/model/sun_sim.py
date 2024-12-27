@@ -107,3 +107,6 @@ class sunshine:
             par = self.sin_light_fluctuating(t, frequency, par_max, par_min, \
                                         t0 = Duration_T0, PAR_0 = par0)
         return par
+    
+# PAR = light(t, 1200, 0, 0, 900, 100)
+#     light_per_L=0.84 * PAR/0.7 =0   

@@ -71,10 +71,10 @@ def f(t, y, pKreg, max_PSII, kQA, max_b6f, lumen_protons_per_turnover, PAR, ATP_
     PSII_antenna_size, Volts_per_charge, perm_K, n, Em7_PQH2, Em7_PC,Em_Fd, PSI_antenna_size, 
     buffering_capacity, VDE_max_turnover_number, pKvde, VDE_Hill, kZE, pKPsbS, max_NPQ, k_recomb, k_PC_to_P700, 
     triplet_yield, triplet_to_singletO2_yield, fraction_pH_effect, k_Fd_to_NADP, k_CBC, k_KEA, k_VCCN1, k_CLCE, k_NDH): 
-    # sun = sunshine()
-    #The following are holders for paramters for testing internal functions of f
-    # PAR = sun.light(t, 1200, LIGHT, FREQUENCY, 900, 100)
-    # light_per_L=0.84 * PAR/0.7
+    sun = sunshine()
+    # The following are holders for paramters for testing internal functions of f
+    PAR = sun.light(t, 1200, LIGHT, FREQUENCY, 900, 100)
+    light_per_L=0.84 * PAR/0.7
 
 
     computer = block()

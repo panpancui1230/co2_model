@@ -89,7 +89,7 @@ class block:
     #         #ATP synthase actvt dependent but does not make ATP
     #     return V_H
 
-    def V_H_light(self, v_proton_ATP, pmf, Hlumen, k_leak = 3*10**7):
+    def V_H_dark(self, v_proton_ATP, pmf, Hlumen, k_leak = 3*10**7):
         V_H = -v_proton_ATP + pmf*k_leak*Hlumen
         return V_H
 

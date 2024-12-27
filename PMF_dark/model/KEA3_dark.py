@@ -268,6 +268,7 @@ def do_complete_sim(y00, t_end, Kx):
 
     Dy = output['Dy']
     pHlumen = output['pHlumen']
+    print("pHlumen", pHlumen)
     pHstroma = output['pHstroma']
     pmf_total= Dy + ((pHstroma-pHlumen)*.06)
 

@@ -1310,8 +1310,11 @@ def f(t, y, pKreg, max_PSII, kQA, max_b6f, lumen_protons_per_turnover, PAR, ATP_
     dpHlumen= -1*dHin / buffering_capacity 
 
     dHstroma = 0#(net_protons_stroma + v_KEA + v_CLCE)*lumen_protons_per_turnover/10
+    # print("dHstroma is :", dHstroma)
     #Assuming the volume of stroma is ten times as that of lumen
     dpHstroma = -1*dHstroma / buffering_capacity
+    # print("dpHstroma is:", dpHstroma)
+
     #***************************************************************************************
     #Calculation of Dy considering all ion movements and thylakoid membrane capatitance
     #***************************************************************************************
@@ -1467,7 +1470,7 @@ def do_complete_sim(y00, t_end, Kx):
         
     soln = solve_ivp(f, [0, t_end], y00, args=Kx.as_tuple(), method = 'BDF', \
                      t_eval = np.linspace(0, t_end, 10*t_end+1), max_step = 5)
-    
+    print("soln:", soln)
     # Fix the problem with zero time difference between runs.
 
     time_axis = soln.t
@@ -1483,6 +1486,7 @@ def do_complete_sim(y00, t_end, Kx):
     # Calculate pmf_total from Dy and delta_pH
     Dy = output['Dy']
     pHlumen = output['pHlumen']
+    print("pHlumen", pHlumen)
     pHstroma = output['pHstroma']
     pmf_total= Dy + ((pHstroma-pHlumen)*.06)
     
@@ -1666,9 +1670,9 @@ def do_complete_sim(y00, t_end, Kx):
             output['K_flux'][i]=output['K_flux'][i-1]
 
     # calculate the deficit in ATP/NADPH and store it in output['deficit']
-    output['deficit']=(output['LEF_to_NADPH']*(3.0/Kx.n)-output['ATP_rate'])  
-    output['deficit_int']=integrate.cumtrapz(output['deficit'], output['time_axis'], initial=0)
-    output['fract_deficit']=output['deficit_int']/output['LEF_to_NADPH']
+    # output['deficit']=(output['LEF_to_NADPH']*(3.0/Kx.n)-output['ATP_rate'])  
+    # output['deficit_int']=integrate.cumtrapz(output['deficit'], output['time_axis'], initial=0)
+    # output['fract_deficit']=output['deficit_int']/output['LEF_to_NADPH']
 
     return(output)
 
