@@ -1,33 +1,21 @@
-import sys
 import numpy as np
 import matplotlib.pyplot as plt
 from scipy.integrate import odeint
-from scipy.integrate import ode
-from scipy.integrate import solve_ivp
-from matplotlib.ticker import FormatStrFormatter
-import matplotlib as mpl
-import importlib as im
-from matplotlib import cm
-import copy
-import pandas as pd
-from scipy import integrate
-from scipy import signal
-from IPython.core.display import display, HTML
-import csv
-import warnings
 
-from painter import Plotting
-from utils import standard_constants
-from utils import standard_initial_states
-from utils import sim_states
-from utils import sim_constants
 from calc import block
-from sun_sim import sunshine
 
-species_labels = ['pHlumen', 'Dy', 'pmf', 'Klumen', 'Kstroma', 'Cl_lumen', 'Cl_stroma', 'Hstroma', 'pHstroma']
+#parameters
+lumen_protons_per_turnover = 0.000587
+ATP_synthase_max_turnover = 200.0
+Volts_per_charge = 0.047
+perm_K = 150
+n = 4.666
+buffering_capacity = 0.03
+k_KEA = 2500000
+k_VCCN1 = 12
+k_CLCE = 800000
 
-def f(t, y, lumen_protons_per_turnover, ATP_synthase_max_turnover, Volts_per_charge, perm_K,
-      n, buffering_capacity, k_KEA, k_VCCN1, k_CLCE):
+def model(y,t):
     computer = block()
 
     pHlumen, Dy, pmf, Klumen, Kstroma, Cl_lumen, Cl_stroma, Hstroma, pHstroma=y
@@ -81,33 +69,48 @@ def f(t, y, lumen_protons_per_turnover, ATP_synthase_max_turnover, Volts_per_cha
     return [dpHlumen, dDy, dpmf, dKlumen, dKstroma, dCl_lumen, dCl_stroma,dHstroma, dpHstroma]
 
 
-def simulate(initial_states, t_end, params):
-    sol = solve_ivp(f, [0,t_end], initial_states, args=params, method='BDF', 
-                    t_eval = np.linspace(0, t_end, 10*t_end+1), max_step = 5)
-    print("sol:", sol)
-    return sol
-    
+dpHlumen_initial = 7.8
+dDy_initial = 0.056
+dpmf_initial = 0.112
+dKlumen_initial = 0.1
+dKstrom_initial = 0.1
+dCl_lumen_initial = 0.04
+dCl_stroma_initial = 0.04
+dHstroma_initial = 0.0
+dpHstroma_initial = 7.8
 
-def plot_results(sol, species_labels):
-    time = sol.t
-    results = sol.y
+initial=[dpHlumen_initial, dDy_initial, dpmf_initial, dKlumen_initial, dKstrom_initial, 
+         dCl_lumen_initial, dCl_stroma_initial, dHstroma_initial, dpHstroma_initial]
 
+t = np.arange(0,1200,0.1)
 
-    plt.figure(figsize=(12, 8))
-    for i, label in enumerate(species_labels):
-        plt.plot(time, results[i], label=label)
-    plt.xlabel('Time (s)')
-    plt.ylabel('Concentration/Gradient')
-    plt.title('Simulation Results')
-    plt.legend()
-    plt.show()
+sol = odeint(model, initial, t)
 
+pHlumen=sol[:,0]
+Dy=sol[:,1]
+pmf=sol[:,2]
+Klumen=sol[:,3]
+Kstroma=sol[:,4]
+Cl_lumen=sol[:,5]
+Cl_stroma=sol[:,6]
+Hstroma=sol[:,7]
+pHstroma=sol[:,8]
 
-# [dpHlumen, dDy, dpmf, dKlumen, dKstroma, dCl_lumen, dCl_stroma,dHstroma, dpHstroma]
-# initial_states = [7.8, 0.0, 0.12, 0.1, 0.1, 0.04, 0.04, 0.0, 7.8]
-initial_states = [7.8, 0.056, 0.112, 0.1, 0.1, 0.04, 0.04, 0.0, 7.8]
-params = [0.000587, 200.0, 0.047, 150, 4.666, 0.03, 2500000, 12, 800000]
-t_end = 1200
+plt.figure(figsize=(10, 6))
+# plt.plot(pHlumen, label='pHlumen', color='red', linestyle=':', linewidth=3, alpha=0.5)
+# plt.plot(Dy, label='Dy', color='red', linestyle='--', linewidth=3)
+plt.plot(pmf, label='pmf', color='red', linewidth=3)
 
-sol = simulate(initial_states, t_end, params)
-plot_results(sol, species_labels)
+# plt.plot(Klumen, label='Klumen', color='green', linestyle=':', linewidth=3, alpha=0.5)
+# plt.plot(Kstroma, label='Kstroma', color='green', linestyle='--', linewidth=3)
+# plt.plot(Cl_lumen, label='Cl_lumen', color='green', linewidth=3)
+
+# plt.plot(Cl_stroma, label='Cl_stroma', color='blue', linestyle=':', linewidth=3, alpha=0.5)
+# plt.plot(Hstroma, label='Hstroma', color='blue', linestyle='--', linewidth=3)
+# plt.plot(pHstroma, label='pHstroma', color='blue', linewidth=3)
+
+plt.xlabel('time')
+plt.ylabel('pmf')
+plt.title('dark')
+plt.legend()
+plt.show()
