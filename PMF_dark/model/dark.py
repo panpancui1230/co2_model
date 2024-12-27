@@ -85,8 +85,6 @@ def f(t, y, lumen_protons_per_turnover, ATP_synthase_max_turnover, Volts_per_cha
     return [dpHlumen, dDy, dpmf, dKlumen, dKstroma, dCl_lumen, dCl_stroma,dHstroma, dpHstroma]
 
 
-
-
 def simulate(initial_states, t_end, params):
     sol = solve_ivp(f, [0,t_end], initial_states, args=params, method='BDF', 
                     t_eval = np.linspace(0, t_end, 10*t_end+1), max_step = 5)
