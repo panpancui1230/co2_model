@@ -80,18 +80,18 @@ class block:
         v_proton_ATP = v_active + v_inert
         return (v_proton_ATP)
     
-    #改成没有光照
+    # 改成没有光照
     # def V_H_light(self, light_per_L, v_proton_ATPase, pmf, Hlumen, k_leak = 3*10**7):
     #     if light_per_L>0.0:
     #         V_H = v_proton_ATPase + pmf*k_leak*Hlumen
     #     else:
     #         V_H = pmf*k_leak*Hlumen# this term is used for dark relaxation,
     #         #ATP synthase actvt dependent but does not make ATP
-    #     return V_H 
-    def V_H_light(self, pmf, Hlumen, k_leak = 3*10**7):
-        V_H = pmf*k_leak*Hlumen# this term is used for dark relaxation,
-            #ATP synthase actvt dependent but does not make ATP
-        return V_H 
+    #     return V_H
+
+    def V_H_light(self, v_proton_ATP, pmf, Hlumen, k_leak = 3*10**7):
+        V_H = -v_proton_ATP + pmf*k_leak*Hlumen
+        return V_H
 
     def recombination_with_pH_effects(self, k_recomb, QAm, Dy, pHlumen, fraction_pH_effect):
         delta_delta_g_recomb= Dy + .06*(7.0-pHlumen)

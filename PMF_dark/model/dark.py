@@ -59,8 +59,8 @@ def f(t, y, lumen_protons_per_turnover, ATP_synthase_max_turnover, Volts_per_cha
     dCl_stroma = -0.1*dCl_lumen
 
     # dATP
-    activity = computer.ATP_synthase_actvt(t, 200)
-    d_protons_to_ATP = computer.Vproton_pmf_actvt(pmf, activity, ATP_synthase_max_turnover, n)
+    # activity = computer.ATP_synthase_actvt(t, 200)
+    d_protons_to_ATP = computer.Vproton_pmf_actvt(pmf, 0, ATP_synthase_max_turnover, n)
 
     #dpHlumen
     # d_H_ATP_or_passive = computer.V_H_light(light_per_L, d_protons_to_ATP, pmf, Hlumen)      
@@ -107,7 +107,7 @@ def plot_results(sol, species_labels):
 # initial_states = [7.8, 0.0, 0.12, 0.1, 0.1, 0.04, 0.04, 0.0, 7.8]
 initial_states = [7.8, 0.056, 0.112, 0.1, 0.1, 0.04, 0.04, 0.0, 7.8]
 params = [0.000587, 200.0, 0.047, 150, 4.666, 0.03, 2500000, 12, 800000]
-t_end = 1200  
+t_end = 1200
 
 sol = simulate(initial_states, t_end, params)
 plot_results(sol, species_labels)
