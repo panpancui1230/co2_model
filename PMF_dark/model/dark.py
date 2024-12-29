@@ -15,7 +15,14 @@ k_KEA = 2500000
 k_VCCN1 = 12
 k_CLCE = 800000
 
-def model(y,t):
+def get_mutant_params(gtype):
+    k_CLCE_mut = k_CLCE if gtype is None or 'clce2' not in gtype else 0
+    k_KEA_mut = k_KEA if gtype is None or 'kea3' not in gtype else 0
+    k_VCCN1_mut = k_VCCN1 if gtype is None or 'vccn1' not in gtype else 0
+    return k_CLCE_mut, k_KEA_mut, k_VCCN1_mut
+
+
+def model(y,t,k_CLCE_mut, k_KEA_mut, k_VCCN1_mut ):
     computer = block()
 
     pHlumen, Dy, pmf, Klumen, Kstroma, Cl_lumen, Cl_stroma, Hstroma, pHstroma=y
@@ -23,7 +30,7 @@ def model(y,t):
     #KEA3
     Hlumen = 10**(-1*pHlumen)
     Hstroma = 10**(-1*pHstroma)
-    v_KEA = k_KEA*(Hlumen*Kstroma -  Hstroma*Klumen)
+    v_KEA = k_KEA_mut*(Hlumen*Kstroma -  Hstroma*Klumen)
    
     #V_K 可能要加调控
     K_deltaG=-0.06*np.log10(Kstroma/Klumen) + Dy
@@ -31,10 +38,10 @@ def model(y,t):
     
     #VCCN1
     driving_force_Cl = 0.06* np.log10(Cl_stroma/Cl_lumen) + Dy
-    v_VCCN1 = k_VCCN1 * computer.Cl_flux_relative(driving_force_Cl) * (Cl_stroma + Cl_lumen)/2
+    v_VCCN1 = k_VCCN1_mut * computer.Cl_flux_relative(driving_force_Cl) * (Cl_stroma + Cl_lumen)/2
 
     #CLCE
-    v_CLCE =  k_CLCE*(driving_force_Cl*2+pmf)*(Cl_stroma + Cl_lumen)*(Hlumen+Hstroma)/4   
+    v_CLCE =  k_CLCE_mut*(driving_force_Cl*2+pmf)*(Cl_stroma + Cl_lumen)*(Hlumen+Hstroma)/4   
 
     #dK+/dt
     # net_Klumen =  v_KEA - v_K_channel        
@@ -82,35 +89,26 @@ dpHstroma_initial = 7.8
 initial=[dpHlumen_initial, dDy_initial, dpmf_initial, dKlumen_initial, dKstrom_initial, 
          dCl_lumen_initial, dCl_stroma_initial, dHstroma_initial, dpHstroma_initial]
 
-t = np.arange(0,1200,0.1)
 
-sol = odeint(model, initial, t)
+gtypes=[None,'clce2','kea3','vccn1']
+labels=['WT','clce2','kea3','vccn1']
+colors=['black','red','blue','green']
 
-pHlumen=sol[:,0]
-Dy=sol[:,1]
-pmf=sol[:,2]
-Klumen=sol[:,3]
-Kstroma=sol[:,4]
-Cl_lumen=sol[:,5]
-Cl_stroma=sol[:,6]
-Hstroma=sol[:,7]
-pHstroma=sol[:,8]
+t = np.arange(0, 1200, 0.1)
 
-plt.figure(figsize=(10, 6))
-# plt.plot(pHlumen, label='pHlumen', color='red', linestyle=':', linewidth=3, alpha=0.5)
-# plt.plot(Dy, label='Dy', color='red', linestyle='--', linewidth=3)
-plt.plot(pmf, label='pmf', color='red', linewidth=3)
+plt.figure(figsize=(12, 8))
 
-# plt.plot(Klumen, label='Klumen', color='green', linestyle=':', linewidth=3, alpha=0.5)
-# plt.plot(Kstroma, label='Kstroma', color='green', linestyle='--', linewidth=3)
-# plt.plot(Cl_lumen, label='Cl_lumen', color='green', linewidth=3)
+for gtype, label, color in zip(gtypes, labels, colors):
+    k_CLCE_mut, k_KEA_mut, k_VCCN1_mut = get_mutant_params(gtype)
+    sol = odeint(model, initial, t, args=(k_CLCE_mut, k_KEA_mut, k_VCCN1_mut))
+    pmf = sol[:, 2]
+    plt.plot(t, pmf, label=label, color=color)
 
-# plt.plot(Cl_stroma, label='Cl_stroma', color='blue', linestyle=':', linewidth=3, alpha=0.5)
-# plt.plot(Hstroma, label='Hstroma', color='blue', linestyle='--', linewidth=3)
-# plt.plot(pHstroma, label='pHstroma', color='blue', linewidth=3)
 
-plt.xlabel('time')
+# Plot settings
+plt.xlabel('Time (s)')
 plt.ylabel('pmf')
-plt.title('dark')
+plt.title('Wild Type (WT) vs Mutants')
 plt.legend()
+plt.grid(True)
 plt.show()
