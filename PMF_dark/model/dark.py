@@ -69,7 +69,7 @@ def model(y,t):
     return [dpHlumen, dDy, dpmf, dKlumen, dKstroma, dCl_lumen, dCl_stroma,dHstroma, dpHstroma]
 
 
-dpHlumen_initial = 7.8
+dpHlumen_initial = 6.5
 dDy_initial = 0.056
 dpmf_initial = 0.112
 dKlumen_initial = 0.1
