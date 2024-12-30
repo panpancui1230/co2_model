@@ -1,79 +1,56 @@
-import sys
 import numpy as np
 import matplotlib.pyplot as plt
 from scipy.integrate import odeint
-from scipy.integrate import ode
-from scipy.integrate import solve_ivp
-from matplotlib.ticker import FormatStrFormatter
-import matplotlib as mpl
-import importlib as im
-from matplotlib import cm
-import copy
-import pandas as pd
-from scipy import integrate
-from scipy import signal
-from IPython.core.display import display, HTML
-import csv
-import warnings
 
-from painter import Plotting
-from utils import standard_constants
-from utils import standard_initial_states
-from utils import sim_states
-from utils import sim_constants
-from calc import block
-# from sun_sim import sunshine
+# from calc import block
 
-species_labels = [
-    'QA', # 0
-    'QAm', #1 
-    'PQ', #2
-    'PQH2', #3
-    'Hin', #4
-    'pHlumen', #5
-    'Dy', #6
-    'pmf', #7
-    'DeltaGatp', #8
-    'Klumen', #9
-    'Kstroma', #10
-    'ATP_made', #11
-    'PC_ox', #12
-    'PC_red', #13
-    'P700_ox', #14
-    'P700_red', #15
-    'Z_array', #16
-    'V_array', #17
-    'NPQ_array', #18
-    'singletO2_array', #19
-    'Phi2_array', #20
-    'LEF_array', #21
-    'Fd_ox',
-    'Fd_red',
-    'ATP_pool',
-    'ADP_pool',
-    'NADPH_pool',
-    'NADP_pool',
-    'Cl_lumen',
-    'Cl_stroma',
-    'Hstroma',
-    'pHstroma'
-    ]
+lumen_protons_per_turnover = 0.000587
+ATP_synthase_max_turnover = 200.0
+Volts_per_charge = 0.047
+perm_K = 150
+n = 4.666
+buffering_capacity = 0.03
+class Kx:
+    k_KEA = 2500000
+    k_VCCN1 = 12
+    k_CLCE = 800000
 
+class block:
+    def ATP_synthase_actvt(self, t, T_ATP):#based on gH+ data
+        x = t/T_ATP
+        actvt = 0.2 + 0.8*(x**4/(x**4 + 1))
+        return actvt
+    
+    def Vproton_pmf_actvt(self, pmf, actvt, ATP_synthase_max_turnover, n):# fraction of activity based on pmf, pmf_act is the half_max actvt pmf
+        v_proton_active = 1 - (1 / (10 ** ((pmf - 0.132)*1.5/0.06) + 1))#reduced ATP synthase
+        v_proton_inert = 1-(1 / (10 ** ((pmf - 0.204)*1.5/0.06) + 1))#oxidized ATP synthase
+        
+        v_active = actvt * v_proton_active * n * ATP_synthase_max_turnover
+        v_inert = (1-actvt) * v_proton_inert * n * ATP_synthase_max_turnover
+        
+        v_proton_ATP = v_active + v_inert
+        return (v_proton_ATP)
 
-def f(t, y, lumen_protons_per_turnover, ATP_synthase_max_turnover, Volts_per_charge, perm_K,
-      n, buffering_capacity, k_KEA, k_VCCN1, k_CLCE):
+    def V_H_dark(self, v_proton_ATP, pmf, Hlumen, k_leak = 3*10**7):
+        V_H = -v_proton_ATP + pmf*k_leak*Hlumen
+        return V_H
+
+    def Cl_flux_relative(self, v):
+        Cl_flux_v = 332*(v**3) + 30.8*(v**2) + 3.6*v
+        #relative to Cl flux thru VCCN1. when driving force is 0.1 Volt,
+        #Cl_flux_v is 1. empirical equation was obtained from
+        # Herdean et al. 2016 DOI: 10.1038/ncomms11654
+        return Cl_flux_v
+
+def model(y,t):
     computer = block()
 
     pHlumen, Dy, pmf, Klumen, Kstroma, Cl_lumen, Cl_stroma, Hstroma, pHstroma=y
-    # pHlumen, Dy, pmf, Klumen, Kstroma, ATP_made, ATP_pool, ADP_pool, Cl_lumen, Cl_stroma,Hstroma, pHstroma = y
-
-    #pmf计算
-    # pmf=Dy + 0.06*(pHstroma-pHlumen) 
 
     #KEA3
     Hlumen = 10**(-1*pHlumen)
     Hstroma = 10**(-1*pHstroma)
-    v_KEA = k_KEA*(Hlumen*Kstroma -  Hstroma*Klumen)
+    v_KEA = Kx.k_KEA*(Hlumen*Kstroma -  Hstroma*Klumen)
    
     #V_K 可能要加调控
     K_deltaG=-0.06*np.log10(Kstroma/Klumen) + Dy
@@ -81,94 +58,92 @@ def f(t, y, lumen_protons_per_turnover, ATP_synthase_max_turnover, Volts_per_cha
     
     #VCCN1
     driving_force_Cl = 0.06* np.log10(Cl_stroma/Cl_lumen) + Dy
-    v_VCCN1 = k_VCCN1 * computer.Cl_flux_relative(driving_force_Cl) * (Cl_stroma + Cl_lumen)/2
+    v_VCCN1 = Kx.k_VCCN1 * computer.Cl_flux_relative(driving_force_Cl) * (Cl_stroma + Cl_lumen)/2
 
     #CLCE
-    v_CLCE =  k_CLCE*(driving_force_Cl*2+pmf)*(Cl_stroma + Cl_lumen)*(Hlumen+Hstroma)/4   
+    v_CLCE =  Kx.k_CLCE*(driving_force_Cl*2+pmf)*(Cl_stroma + Cl_lumen)*(Hlumen+Hstroma)/4   
 
     #dK+/dt
-    net_Klumen =  v_KEA - v_K_channel        
-    dKlumen = net_Klumen*lumen_protons_per_turnover  
+    # net_Klumen =  v_KEA - v_K_channel        
+    dKlumen = (v_KEA - v_K_channel)*lumen_protons_per_turnover  
     dKstroma=0
 
     #dCl-/dt
-    net_Cl_lumen_in = v_VCCN1 + 2*v_CLCE
-    dCl_lumen = net_Cl_lumen_in * lumen_protons_per_turnover
+    # net_Cl_lumen_in = v_VCCN1 + 2*v_CLCE
+    dCl_lumen = (v_VCCN1 + 2*v_CLCE) * lumen_protons_per_turnover
     dCl_stroma = -0.1*dCl_lumen
 
-    # dATP
-    # activity = computer.ATP_synthase_actvt(t, T_ATP)
-    activity = computer.ATP_synthase_actvt(t, 200)
-    d_protons_to_ATP = computer.Vproton_pmf_actvt(pmf, activity, ATP_synthase_max_turnover, n)
-    # d_ATP_made=d_protons_to_ATP/n 
-    # d_ATP_consumed = d_ATP_made
-    # dATP_pool= d_ATP_made - d_ATP_consumed
-    # dADP_pool= - dATP_pool
+    # dATP 水解
+    d_protons_to_ATP = computer.Vproton_pmf_actvt(pmf, 0, ATP_synthase_max_turnover, n)
 
-    #dpHlumen
-    # d_H_ATP_or_passive = computer.V_H_light(light_per_L, d_protons_to_ATP, pmf, Hlumen)      
-    d_H_ATP_or_passive = computer.V_H_light(d_protons_to_ATP, pmf, Hlumen)                         
+    #dpHlumen 质子浓度    
+    d_H_ATP_or_passive = computer.V_H_dark(d_protons_to_ATP, pmf, Hlumen)    
     net_protons_in =  - d_H_ATP_or_passive
     dHin = (net_protons_in - v_KEA - v_CLCE)*lumen_protons_per_turnover
     dpHlumen= -1*dHin / buffering_capacity 
 
-    #dpHstroma
+    #dpHstroma 质子浓度
     dHstroma = 0
     dpHstroma = -1*dHstroma / buffering_capacity
 
-    #dDy
+    #dDy 电位差
     delta_charges= - v_K_channel - v_VCCN1-3*v_CLCE 
     dDy=delta_charges*Volts_per_charge
 
-    #dpmf
+    #dpmf 质子驱动力
     dpmf= 0.06* dpHlumen + dDy
 
     return [dpHlumen, dDy, dpmf, dKlumen, dKstroma, dCl_lumen, dCl_stroma,dHstroma, dpHstroma]
 
-def sim_ivp(params,initial_states,t_end):
-    output=do_complete_sim(initial_states,t_end,params)
-    return output
+def sim_a_gtype(gtype='WT'):
+    Kx.k_KEA = 2500000
+    Kx.k_VCCN1 = 12
+    Kx.k_CLCE = 800000
 
-def do_complete_sim(initial_states, t_end, params):
-    output = {}
-    for label in species_labels:
-        output[label] = []
-    soln = solve_ivp(f, [0, t_end], initial_states, args=params, method='BDF', 
-                    t_eval=np.linspace(0, t_end, 10 * t_end + 1), max_step=5)
-    time_axis = soln.t
-    for index,label in enumerate(species_labels):
-        output[label] = np.append(output[label],soln.y[index,:])
+    if gtype == 'kea3':
+        Kx.k_KEA = 0
+    if 'kea3' in gtype:
+        Kx.k_KEA =0
+    if 'vccn1' in gtype:
+        Kx.k_VCCN1 =0
 
-    end_state = list(soln.y[:,-1])
+dpHlumen_initial = 6.5
+dDy_initial = 0.056
+dpmf_initial = 0.112
+dKlumen_initial = 0.1
+dKstrom_initial = 0.1
+dCl_lumen_initial = 0.04
+dCl_stroma_initial = 0.04
+dHstroma_initial = 0.0
+dpHstroma_initial = 7.8
+initial=[dpHlumen_initial, dDy_initial, dpmf_initial, dKlumen_initial, dKstrom_initial, 
+         dCl_lumen_initial, dCl_stroma_initial, dHstroma_initial, dpHstroma_initial]
 
-    Dy = output['Dy']
-    pHlumen = output['pHlumen']
-    pHstroma = output['pHstroma']
-    pmf_total= Dy + ((pHstroma-pHlumen)*.06)
+t = np.arange(0,1200,0.1)
 
-    output['delta_pH']=delta_pH
+gtypes = ['WT', 'kea3', 'vccn1', 'clce2']
+colors = ['black', 'blue', 'green', 'red']
+variables = ['pHlumen', 'Dy', 'pmf', 'Klumen', 'Kstroma', 'Cl_lumen', 'Cl_stroma', 'Hstroma', 'pHstroma']
 
-    return sol
+fig, axes = plt.subplots(3, 3, figsize=(18, 12))
+axes = axes.flatten()
 
-# 数据处理与绘图
-def plot_results(sol, labels):
-    time = sol.t
-    results = sol.y
-    plt.figure(figsize=(12, 8))
-    for i, label in enumerate(labels):
-        plt.plot(time, results[i], label=label)
-    plt.xlabel('Time (s)')
-    plt.ylabel('Concentration/Gradient')
-    plt.title('Simulation Results')
-    plt.legend()
-    plt.show()
+for idx in range(len(gtypes)):
+    gtype = gtypes[idx]
+    color = colors[idx]
+    
+    sim_a_gtype(gtype)
+    sol = odeint(model, initial, t)
+    
+    for i, var in enumerate(variables):
+        axes[i].plot(t, sol[:, i], label=gtype, color=color)
 
-# 设置初始条件和参数
-initial_states = [7.8, 0.0, 0.0, 0.1, 0.1, 0.04, 0.04, 0.0, 7.8]
-params = (0.000587, 200.0, 0.047, 150, 4.666, 0.03, 2500000, 12, 800000)
-t_end = 1200  # 模拟时间范围
+for i, var in enumerate(variables):
+    axes[i].set_title(var)
+    axes[i].set_xlabel('Time (s)')
+    axes[i].set_ylabel(var)
+    axes[i].legend(loc='upper right')
+    axes[i].grid(True)
 
-# 运行模拟并绘制结果
-species_labels = ['pHlumen', 'Dy', 'pmf', 'Klumen', 'Kstroma', 'Cl_lumen', 'Cl_stroma', 'Hstroma', 'pHstroma']
-sol = simulate(initial_states, t_end, params)
-plot_results(sol, species_labels)
+plt.tight_layout()
+plt.show()
