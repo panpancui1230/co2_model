@@ -29,10 +29,12 @@ class block:
         v_inert = (1-actvt) * v_proton_inert * n * ATP_synthase_max_turnover
         
         v_proton_ATP = v_active + v_inert
+        # v_proton_ATP = 0
         return (v_proton_ATP)
 
     def V_H_dark(self, v_proton_ATP, pmf, Hlumen, k_leak = 3*10**7):
         V_H = -v_proton_ATP + pmf*k_leak*Hlumen
+        # V_H = -v_proton_ATP + 0
         return V_H
 
     def Cl_flux_relative(self, v):
@@ -55,6 +57,7 @@ def model(y,t):
     #V_K 可能要加调控
     K_deltaG=-0.06*np.log10(Kstroma/Klumen) + Dy
     v_K_channel = perm_K * K_deltaG*(Klumen+Kstroma)/2
+    # v_K_channel = 0 * K_deltaG*(Klumen+Kstroma)/2
     
     #VCCN1
     driving_force_Cl = 0.06* np.log10(Cl_stroma/Cl_lumen) + Dy
@@ -87,7 +90,7 @@ def model(y,t):
     dpHstroma = -1*dHstroma / buffering_capacity
 
     #dDy 电位差
-    delta_charges= - v_K_channel - v_VCCN1-3*v_CLCE 
+    delta_charges= d_H_ATP_or_passive - v_K_channel - v_VCCN1-3*v_CLCE 
     dDy=delta_charges*Volts_per_charge
 
     #dpmf 质子驱动力
@@ -100,20 +103,34 @@ def sim_a_gtype(gtype='WT'):
     Kx.k_VCCN1 = 12
     Kx.k_CLCE = 800000
 
-    if gtype == 'kea3':
-        Kx.k_KEA = 0
     if 'kea3' in gtype:
         Kx.k_KEA =0
     if 'vccn1' in gtype:
         Kx.k_VCCN1 =0
+    if 'clce2' in gtype:
+        Kx.k_CLCE =0
 
-dpHlumen_initial = 6.5
-dDy_initial = 0.056
-dpmf_initial = 0.112
-dKlumen_initial = 0.1
+# dpHlumen_initial = 6.5
+# # dDy_initial = 0.056
+# dDy_initial = 0.01
+# dpmf_initial = 0.079
+# # dpmf_initial = 0.18
+# dKlumen_initial = 0.1
+# dKstrom_initial = 0.1
+# dCl_lumen_initial = 0.04
+# dCl_stroma_initial = 0.04
+# dHstroma_initial = 0.0
+# dpHstroma_initial = 7.8
+
+dpHlumen_initial = 5.994956
+# dDy_initial = 0.056
+dDy_initial = 0.010221
+dpmf_initial = 0.118524
+# dpmf_initial = 0.18
+dKlumen_initial = 0.086659
 dKstrom_initial = 0.1
-dCl_lumen_initial = 0.04
-dCl_stroma_initial = 0.04
+dCl_lumen_initial = 0.053123
+dCl_stroma_initial = 0.038688
 dHstroma_initial = 0.0
 dpHstroma_initial = 7.8
 initial=[dpHlumen_initial, dDy_initial, dpmf_initial, dKlumen_initial, dKstrom_initial, 
@@ -123,7 +140,10 @@ t = np.arange(0,1200,0.1)
 
 
 gtypes = ['WT', 'kea3', 'vccn1', 'clce2']
+# gtypes = ['WT', 'kea3', 'vccn1']
 colors = ['black', 'blue', 'green', 'red']
+# markers = ['o','s','^','^']
+# colors = ['black','blue', 'green']
 variables = ['pHlumen', 'Dy', 'pmf', 'Klumen', 'Kstroma', 'Cl_lumen', 'Cl_stroma', 'Hstroma', 'pHstroma']
 
 # Plot results for all variables
@@ -133,19 +153,21 @@ axes = axes.flatten()
 for idx in range(len(gtypes)):
     gtype = gtypes[idx]
     color = colors[idx]
+    # marker = markers[idx]
     
     sim_a_gtype(gtype)
     sol = odeint(model, initial, t)
     
     for i, var in enumerate(variables):
-        axes[i].plot(t, sol[:, i], label=gtype, color=color)
+        # axes[i].plot(t, sol[:, i], marker = marker, label=gtype, color=color, alpha=0.75)
+        axes[i].plot(t, sol[:, i], label=gtype, color=color, alpha=0.75)
 
 for i, var in enumerate(variables):
     axes[i].set_title(var)
     axes[i].set_xlabel('Time (s)')
     axes[i].set_ylabel(var)
     axes[i].legend(loc='upper right')
-    axes[i].grid(True)
+    axes[i].grid(False)
 
 plt.tight_layout()
 plt.show()
