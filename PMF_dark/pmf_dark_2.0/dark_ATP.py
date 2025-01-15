@@ -27,13 +27,13 @@ class block:
         v_inert = (1-actvt) * v_proton_inert * n * ATP_synthase_max_turnover
         
         v_proton_ATP = v_active + v_inert
-        # v_proton_ATP = 0
+        v_proton_ATP = 0
         return (v_proton_ATP)
 
 
     def V_H_dark(self, v_proton_ATP, pmf, Hlumen, k_leak = 3*10**7):
         V_H = -v_proton_ATP + pmf*k_leak*Hlumen
-        # V_H = -v_proton_ATP + 0
+        # V_H = v_proton_ATP + pmf*k_leak*Hlumen
         return V_H
 
     def Cl_flux_relative(self, v):
@@ -51,8 +51,12 @@ def model(y,t):
     v_KEA = Kx.k_KEA*(Hlumen*Kstroma -  Hstroma*Klumen)
    
     #V_K
-    K_deltaG=-0.06*np.log10(Kstroma/Klumen) + Dy
-    v_K_channel = perm_K * K_deltaG*(Klumen+Kstroma)/2
+    K_deltaG= -0.06*np.log10(Kstroma/Klumen) + Dy
+    # if Kstroma > 0 and Klumen > 0:
+    #     K_deltaG = -0.06 * np.log10(Kstroma / Klumen) + Dy
+    # else:
+    #     K_deltaG = 0
+    v_K_channel = perm_K * K_deltaG*(Klumen+Kstroma)/2 #修改
     # v_K_channel = 0 * K_deltaG*(Klumen+Kstroma)/2
     
     #VCCN1
@@ -86,11 +90,11 @@ def model(y,t):
     dpHstroma = -1*dHstroma / buffering_capacity
 
     #dDy 
-    delta_charges= d_H_ATP_or_passive - v_K_channel - v_VCCN1-3*v_CLCE 
+    delta_charges= -d_H_ATP_or_passive - v_K_channel - v_VCCN1-3*v_CLCE 
     dDy=delta_charges*Volts_per_charge
 
-    #dpmf 
-    dpmf= 0.06* dpHlumen + dDy
+    #dpmf #pHlumen正负号
+    dpmf= -0.06* dpHlumen + dDy
 
     return [dpHlumen, dDy, dpmf, dKlumen, dKstroma, dCl_lumen, dCl_stroma,dHstroma, dpHstroma]
 
