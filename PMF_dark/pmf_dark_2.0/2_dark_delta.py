@@ -120,8 +120,10 @@ initial=[dpHlumen_initial, dDy_initial, dpmf_initial, dKlumen_initial, dKstroma_
 
 t = np.arange(0,7200,0.1)
 
-gtypes = ['WT', 'kea3', 'vccn1']
-colors = ['black', 'blue', 'red']
+# gtypes = ['WT', 'kea3', 'vccn1']
+gtypes = ['kea3']
+# colors = ['black', 'blue', 'red']
+colors = ['blue']
 variables = ['pHlumen', 'Dy', 'pmf', 'Klumen', 'Kstroma', 'Cl_lumen', 'Cl_stroma', 'Hstroma', 'pHstroma']
 
 results = {}
@@ -139,19 +141,19 @@ stroma_total = {gtype: results[gtype][:,6] + 0.1 for gtype in gtypes}
 delta_total = {gtype: lumen_total[gtype] - stroma_total[gtype]
                for gtype in gtypes}
 
-for gtype in gtypes:
-    print(f"Genotype: {gtype}")
-    print(f"Lumen Total (First 10): {lumen_total[gtype][:10]}")
-    print(f"Stroma Total (First 10): {stroma_total[gtype][:10]}")
-    print(f"Delta Total (First 10): {delta_total[gtype][:10]}")
+# for gtype in gtypes:
+#     print(f"Genotype: {gtype}")
+#     print(f"Lumen Total (First 10): {lumen_total[gtype][:10]}")
+#     print(f"Stroma Total (First 10): {stroma_total[gtype][:10]}")
+#     print(f"Delta Total (First 10): {delta_total[gtype][:10]}")
 
 plt.figure(figsize=(14,6))
 
 for idx, gtype in enumerate(gtypes):
     plt.plot(t,delta_total[gtype], label = gtype, color = colors[idx], alpha = 0.75)
     
-plt.xlabel('Time(s)', fontsize = 18)
-plt.ylabel('delta_total (lumen_total-stroma_total)',  fontsize = 18)
+plt.xlabel('Time(s)', fontsize = 16)
+plt.ylabel('delta_total (lumen_total-stroma_total)',  fontsize = 16)
 plt.legend(
     loc = 'upper center',
     bbox_to_anchor = (0.5,1.1),
@@ -162,8 +164,8 @@ plt.legend(
 # plt.subplot(1,2,1)
 # for idx, gtype in enumerate(gtypes):
 #     plt.plot(t, delta_K[gtype], label = gtype, color = colors[idx], alpha = 0.75)
-# plt.xlabel('Time(s)')
-# plt.ylabel('delta_K (Klumen-0.1)')
+# plt.xlabel('Time(s)', fontsize=18)
+# plt.ylabel('delta_K (Klumen-0.1)', fontsize=18)
 # # plt.title
 # plt.legend(
 #     loc = "upper center",
@@ -177,8 +179,8 @@ plt.legend(
 # plt.subplot(1,2,2)
 # for idx, gtype in enumerate(gtypes):
 #     plt.plot(t, delta_Cl[gtype], label = gtype, color = colors[idx], alpha = 0.75)
-# plt.xlabel('Time(s)')
-# plt.ylabel('delta_Cl (Cl_lumen-Cl_stroma)')
+# plt.xlabel('Time(s)', fontsize=18)
+# plt.ylabel('delta_Cl (Cl_lumen-Cl_stroma)', fontsize=18)
 # # plt.title
 # plt.legend(
 #     loc = "upper center",

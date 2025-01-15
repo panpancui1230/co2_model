@@ -95,6 +95,7 @@ def model(y,t):
 
     #dpmf #pHlumen正负号
     dpmf= -0.06* dpHlumen + dDy
+    # dpmf= 0.06* dpHlumen + dDy
 
     return [dpHlumen, dDy, dpmf, dKlumen, dKstroma, dCl_lumen, dCl_stroma,dHstroma, dpHstroma]
 
@@ -122,7 +123,7 @@ dpHstroma_initial = 7.8
 initial=[dpHlumen_initial, dDy_initial, dpmf_initial, dKlumen_initial, dKstrom_initial, 
          dCl_lumen_initial, dCl_stroma_initial, dHstroma_initial, dpHstroma_initial]
 
-t = np.arange(0,7200,0.1)
+t = np.arange(0,1200,0.1)
 
 gtypes = ['WT', 'kea3', 'vccn1']
 colors = ['black', 'blue', 'red']
