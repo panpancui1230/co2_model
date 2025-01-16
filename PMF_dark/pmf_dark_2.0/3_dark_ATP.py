@@ -126,51 +126,74 @@ initial=[dpHlumen_initial, dDy_initial, dpmf_initial, dKlumen_initial, dKstrom_i
 t = np.arange(0,1200,0.1)
 
 gtypes = ['WT', 'kea3', 'vccn1']
+# gtypes = ['kea3']
 colors = ['black', 'blue', 'red']
+# colors = ['blue']
 variables = ['pHlumen', 'Dy', 'pmf', 'Klumen', 'Kstroma', 'Cl_lumen', 'Cl_stroma', 'Hstroma', 'pHstroma']
 
-exclude_vars = ['Kstroma', 'Hstroma', 'pHstroma']  # Variables to exclude from plotting
-
-# Determine the indices of variables to plot
-plot_indices = [i for i, var in enumerate(variables) if var not in exclude_vars]
-plot_vars = [variables[i] for i in plot_indices]
-
-# Adjust font sizes globally
-plt.rcParams.update({
-    'font.size': 14,  # Set the base font size for all text
-    'axes.titlesize': 20,  # Title size
-    'axes.labelsize': 16,  # Label size
-    'xtick.labelsize': 12,  # X-axis tick size
-    'ytick.labelsize': 12,  # Y-axis tick size
-    'legend.fontsize': 12  # Legend font size
-})
-
-fig, axes = plt.subplots(2, 3, figsize=(14, 8))  # Adjusted for 6 subplots
-axes = axes.flatten()
-
-for idx in range(len(gtypes)):
-    gtype = gtypes[idx]
-    color = colors[idx]
-    
+results = {}
+for gtype in gtypes:
     sim_a_gtype(gtype)
     sol = odeint(model, initial, t)
+    results[gtype] = sol
+
+delta_K = {gtype: results[gtype][:,3] - 0.1 for gtype in gtypes}
+delta_Cl = {gtype: results[gtype][:,5] - results[gtype][:,6]
+            for gtype in gtypes}
+# lumen_total = {gtype: results[gtype][:,3] + results[gtype][:,5]
+#                for gtype in gtypes}
+# stroma_total = {gtype: results[gtype][:,6] + 0.1 for gtype in gtypes}
+# delta_total = {gtype: lumen_total[gtype] - stroma_total[gtype]
+#                for gtype in gtypes}
+
+# for gtype in gtypes:
+#     print(f"Genotype: {gtype}")
+#     print(f"Lumen Total (First 10): {lumen_total[gtype][:10]}")
+#     print(f"Stroma Total (First 10): {stroma_total[gtype][:10]}")
+#     print(f"Delta Total (First 10): {delta_total[gtype][:10]}")
+
+plt.figure(figsize=(14,6))
+
+# for idx, gtype in enumerate(gtypes):
+#     plt.plot(t,delta_total[gtype], label = gtype, color = colors[idx], alpha = 0.75)
     
-    for i, var_idx in enumerate(plot_indices):
-        axes[i].plot(t, sol[:, var_idx], label=gtype, color=color, alpha=0.75)
+# plt.xlabel('Time(s)', fontsize = 16)
+# plt.ylabel('delta_total (lumen_total-stroma_total)',  fontsize = 16)
+# plt.legend(
+#     loc = 'upper center',
+#     bbox_to_anchor = (0.5,1.1),
+#     ncol = 3,
+#     frameon = False,
+#     fontsize = 18
+# )
+plt.subplot(1,2,1)
+for idx, gtype in enumerate(gtypes):
+    plt.plot(t, delta_K[gtype], label = gtype, color = colors[idx], alpha = 0.75)
+plt.xlabel('Time(s)', fontsize=16)
+plt.ylabel('delta_K (Klumen-0.1)', fontsize=16)
+# plt.title
+plt.legend(
+    loc = "upper center",
+    bbox_to_anchor = (0.5,1.1),
+    ncol = 3,
+    frameon = False,
+    fontsize = 12
+)
+plt.grid(False)
 
-for i, var in enumerate(plot_vars):
-    # axes[i].set_title(var)
-    axes[i].set_xlabel('Time/s')
-    axes[i].set_ylabel(var)
-    # axes[i].legend(loc='upper right')
-    axes[i].legend(
-        loc='upper center', 
-        bbox_to_anchor=(0.5, 1.1),  # Adjust position above the plot
-        ncol=3,                    # Number of columns for the legend
-        frameon=False,             # No border around the legend
-        fontsize=10                # Smaller font size for clarity
-    )
-    axes[i].grid(False)
+plt.subplot(1,2,2)
+for idx, gtype in enumerate(gtypes):
+    plt.plot(t, delta_Cl[gtype], label = gtype, color = colors[idx], alpha = 0.75)
+plt.xlabel('Time(s)', fontsize=16)
+plt.ylabel('delta_Cl (Cl_lumen-Cl_stroma)', fontsize=16)
+# plt.title
+plt.legend(
+    loc = "upper center",
+    bbox_to_anchor = (0.5,1.1),
+    ncol = 3,
+    frameon = False,
+    fontsize = 12
+)
+plt.grid(False)
 
-plt.tight_layout()
 plt.show()
