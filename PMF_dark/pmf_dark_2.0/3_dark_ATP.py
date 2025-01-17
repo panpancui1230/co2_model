@@ -18,7 +18,7 @@ class block:
         # x = t/T_ATP
         # actvt = 0.2 + 0.8*(x**4/(x**4 + 1))
         # return actvt
-        actvt = 0.2 + 0.8 * np.exp(-0.00154 * t)
+        actvt = 0.05 + 0.95 * np.exp(-0.008 * t)
         return actvt
     
     #合成
@@ -35,23 +35,24 @@ class block:
     
 
     #水解
-    def V_ATP_proton_pmf_actvt(self, pmf, actvt, ATP_synthase_max_turnover, n):# fraction of activity based on pmf, pmf_act is the half_max actvt pmf
+    def V_ATP_proton_pmf_actvt(self, pmf, actvt, n):# fraction of activity based on pmf, pmf_act is the half_max actvt pmf
         v_ATP_proton_active = 1 - (1 / (10 ** ((pmf - 0.099)*1.5/0.06) + 1))#reduced ATP synthase 1.65
         v_ATP_proton_inert = 1-(1 / (10 ** ((pmf - 0.201)*1.5/0.06) + 1))#oxidized ATP synthase 3.35
         
-        v_ATP_active = actvt * v_ATP_proton_active * n * ATP_synthase_max_turnover
-        v_ATP_inert = (1-actvt) * v_ATP_proton_inert * n * ATP_synthase_max_turnover
+        v_ATP_active = actvt * v_ATP_proton_active * n * 25
+        v_ATP_inert = (1-actvt) * v_ATP_proton_inert * n * 25
         
         v_ATP_proton = v_ATP_active + v_ATP_inert
         # v_proton_ATP = 0
         return (v_ATP_proton)
         
-
     def V_H_dark(self, v_proton_ATP, v_ATP_proton, pmf, Hlumen, k_leak = 3*10**7):
+    # def V_H_dark(self, v_proton_ATP, v_ATP_proton, pmf, Hlumen, k_leak = 0):
         V_H = v_proton_ATP - v_ATP_proton + pmf*k_leak*Hlumen
         # V_H = v_proton_ATP + pmf*k_leak*Hlumen
         return V_H
 
+    #需要更新
     def Cl_flux_relative(self, v):
         Cl_flux_v = 332*(v**3) + 30.8*(v**2) + 3.6*v
         return Cl_flux_v
@@ -95,7 +96,7 @@ def model(y,t):
     # dATP 
     activity = computer.ATP_synthase_actvt(t)
     d_protons_to_ATP = computer.Vproton_pmf_actvt(pmf, activity, ATP_synthase_max_turnover, n)
-    d_ATP_to_protons = computer.V_ATP_proton_pmf_actvt(pmf, activity, ATP_synthase_max_turnover, n)
+    d_ATP_to_protons = computer.V_ATP_proton_pmf_actvt(pmf, activity, n)
   
     #dpHlumen 
     d_H_ATP_or_passive = computer.V_H_dark( d_protons_to_ATP, d_ATP_to_protons, pmf, Hlumen,k_leak = 3*10**7)    
@@ -142,7 +143,6 @@ initial=[dpHlumen_initial, dDy_initial, dpmf_initial, dKlumen_initial, dKstrom_i
          dCl_lumen_initial, dCl_stroma_initial, dHstroma_initial, dpHstroma_initial]
 
 t = np.arange(0,7200,0.1)
-
 gtypes = ['WT', 'kea3', 'vccn1']
 colors = ['black', 'blue', 'red']
 variables = ['pHlumen', 'Dy', 'pmf', 'Klumen', 'Kstroma', 'Cl_lumen', 'Cl_stroma', 'Hstroma', 'pHstroma']
