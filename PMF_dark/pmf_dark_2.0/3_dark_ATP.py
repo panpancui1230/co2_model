@@ -54,8 +54,8 @@ class block:
 
     #需要更新
     def Cl_flux_relative(self, v):
-        Cl_flux_v = 332*(v**3) + 30.8*(v**2) + 3.6*v
-        # Cl_flux_v= 281394 *(1 - e**(-v/1426366) )+ 2.26
+        # Cl_flux_v = 332*(v**3) + 30.8*(v**2) + 3.6*v
+        Cl_flux_v = 29.044 * np.exp(648.585 * (v / 100)) -29.075
         return Cl_flux_v
 
 def model(y,t):
