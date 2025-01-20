@@ -1,6 +1,7 @@
 import numpy as np
 import matplotlib.pyplot as plt
-from scipy.integrate import odeint
+# from scipy.integrate import odeint
+from scipy.integrate import solve_ivp
 
 lumen_protons_per_turnover = 0.000587
 ATP_synthase_max_turnover = 200.0
@@ -33,7 +34,6 @@ class block:
         # v_proton_ATP = 0
         return (v_proton_ATP)
     
-
     #水解
     def V_ATP_proton_pmf_actvt(self, pmf, actvt, n):# fraction of activity based on pmf, pmf_act is the half_max actvt pmf
         v_ATP_proton_active = 1 - (1 / (10 ** ((pmf - 0.099)*1.5/0.06) + 1))#reduced ATP synthase 1.65
@@ -51,18 +51,18 @@ class block:
         V_H = v_proton_ATP - v_ATP_proton + pmf*k_leak*Hlumen
         # V_H = v_proton_ATP + pmf*k_leak*Hlumen
         return V_H
-
+    
     #需要更新
     def Cl_flux_relative(self, v):
         # Cl_flux_v = 332*(v**3) + 30.8*(v**2) + 3.6*v
         Cl_flux_v = 29.044 * np.exp(648.585 * (v / 100)) -29.075
         return Cl_flux_v
-
-def model(y,t):
+    
+def model(t,y):
     computer = block()
-
+    
     pHlumen, Dy, pmf, Klumen, Kstroma, Cl_lumen, Cl_stroma, Hstroma, pHstroma=y
-
+    
     #KEA3
     Hlumen = 10**(-1*pHlumen)
     Hstroma = 10**(-1*pHstroma)
@@ -143,7 +143,9 @@ dpHstroma_initial = 7.8
 initial=[dpHlumen_initial, dDy_initial, dpmf_initial, dKlumen_initial, dKstrom_initial, 
          dCl_lumen_initial, dCl_stroma_initial, dHstroma_initial, dpHstroma_initial]
 
-t = np.arange(0,7200,0.1)
+# t = np.arange(0,7200,0.1)
+t_span = (0,7200)
+t_eval = np.linspace(0,7200,7200)
 gtypes = ['WT', 'kea3', 'vccn1']
 colors = ['black', 'blue', 'red']
 variables = ['pHlumen', 'Dy', 'pmf', 'Klumen', 'Kstroma', 'Cl_lumen', 'Cl_stroma', 'Hstroma', 'pHstroma']
@@ -172,10 +174,11 @@ for idx in range(len(gtypes)):
     color = colors[idx]
     
     sim_a_gtype(gtype)
-    sol = odeint(model, initial, t)
+    # sol = odeint(model, initial, t) 
+    sol = solve_ivp(model, t_span, initial, t_eval = t_eval, method = "BDF")
     
     for i, var_idx in enumerate(plot_indices):
-        axes[i].plot(t, sol[:, var_idx], label=gtype, color=color, alpha=0.75)
+        axes[i].plot(sol.t, sol.y[var_idx,:], label=gtype, color=color, alpha=0.75)
 
 for i, var in enumerate(plot_vars):
     # axes[i].set_title(var)
@@ -193,7 +196,6 @@ for i, var in enumerate(plot_vars):
 
 plt.tight_layout()
 plt.show()
-
 
 
 
