@@ -1061,7 +1061,11 @@ def f(t, y, pKreg, max_PSII, kQA, max_b6f, lumen_protons_per_turnover, PAR, ATP_
     
     #The following are holders for paramters for testing internal functions of f
     PAR = light(t, 1200, LIGHT, FREQUENCY, 900, 100)
-    # light_per_L=0.84 * PAR/0.7
+    #Wild
+    light_per_L=0.93 * PAR/1.97
+    #TLA3
+    # light_per_L=0.89 * PAR/1.94
+
     # light_per_L=0.84 * PAR/0.7
     #we got 4.1 nmol Chl per 19.6 mm^2 leaf disc, which translate into 210 umol Chl/m2
     #210 umol Chl/m2, PSII/300 Chl ==> 0.7 umol PSII/m2, ==>(PAR/0.7) photons/PSII
@@ -2808,6 +2812,8 @@ class standard_constants(object):
 
     PSI_antenna_size=0.5 #setting this to the same valus as PSII_antenna_size will imply that 
                         #equal numbers of photons hit the two photosystems
+    
+   
 
     k_PC_to_P700=5000 #rate constant for oxidation of PC by P700+
 
@@ -2821,7 +2827,10 @@ class standard_constants(object):
     #parameters for PSII reactions 
     #***************************************************************************************
     max_PSII=1     
-    PSII_antenna_size=0.5
+    # PSII_antenna_size=0.5
+    #Wild
+    PSII_antenna_size=0.524
+
 
     kQA=1000  #the rate constant for oxidation of QA- by PQ
 
@@ -2908,7 +2917,10 @@ class standard_initial_states(object):
 
     #pHlumen_initial=7-Hin_initial/buffering_capacity
     #print('the initial lumen pH = ' + str(pHlumen_initial))
-    QA_content_initial=1
+    # QA_content_initial=1
+    #Wild
+    QA_content_initial=2.814
+    
     QAm_content_initial=0
 
     #***************************************************************************************
@@ -2930,7 +2942,11 @@ class standard_initial_states(object):
     #***************************************************************************************
 
     P700_ox_initial=0.0
-    P700_red_initial=0.667 #Mathias Pribil1, Mathias Labs1 and Dario Leister1,2,* Structure and dynamics of thylakoids in land plantsJournal of Experimental Botany, Vol. 65, No. 8, pp. 1955–1972, 2014
+    # P700_red_initial=0.667 #Mathias Pribil1, Mathias Labs1 and Dario Leister1,2,* Structure and dynamics of thylakoids in land plantsJournal of Experimental Botany, Vol. 65, No. 8, pp. 1955–1972, 2014
+    #Wild
+    P700_red_initial=0.757
+    #TLA3
+    # P700_red_initial=0.832
     #Fan DY1, Hope AB, Smith PJ, Jia H, Pace RJ, Anderson JM, Chow WS, The stoichiometry of the two photosystems in higher plants revisited. Biochim Biophys Acta. 2007 Aug;1767(8):1064-72
 
     PSI_content=P700_red_initial + P700_ox_initial#PSI/PSII = 0.75, see doi:10.1093/jxb/eru090
