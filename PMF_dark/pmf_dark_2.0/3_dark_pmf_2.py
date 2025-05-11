@@ -1,6 +1,5 @@
 import numpy as np
 import matplotlib.pyplot as plt
-import pandas as pd
 # from scipy.integrate import odeint
 from scipy.integrate import solve_ivp
 
@@ -11,7 +10,7 @@ perm_K = 150
 n = 4.666
 buffering_capacity = 0.03
 class Kx:
-    k_KEA = 250000000
+    k_KEA = 2500000
     k_VCCN1 = 12
     k_CLCE = 800000
 
@@ -41,10 +40,10 @@ class block:
         v_ATP_proton_active = 1 - (1 / (10 ** ((pmf - 0.099)*1.5/0.06) + 1))#reduced ATP synthase 1.65
         v_ATP_proton_inert = 1-(1 / (10 ** ((pmf - 0.201)*1.5/0.06) + 1))#oxidized ATP synthase 3.35
         
-        # v_ATP_active = actvt * v_ATP_proton_active * n * 25
-        # v_ATP_inert = (1-actvt) * v_ATP_proton_inert * n * 25
-        v_ATP_active = actvt * v_ATP_proton_active * n * 0
-        v_ATP_inert = (1-actvt) * v_ATP_proton_inert * n * 0
+        v_ATP_active = actvt * v_ATP_proton_active * n * 25
+        v_ATP_inert = (1-actvt) * v_ATP_proton_inert * n * 25
+        # v_ATP_active = actvt * v_ATP_proton_active * n * 250
+        # v_ATP_inert = (1-actvt) * v_ATP_proton_inert * n * 250
         
         v_ATP_proton = v_ATP_active + v_ATP_inert
         # v_proton_ATP = 0
@@ -125,7 +124,7 @@ def model(t,y):
     return [dpHlumen, dDy, dpmf, dKlumen, dKstroma, dCl_lumen, dCl_stroma,dHstroma, dpHstroma]
 
 def sim_a_gtype(gtype='WT'):
-    Kx.k_KEA = 250000000
+    Kx.k_KEA = 2500000
     Kx.k_VCCN1 = 12
     Kx.k_CLCE = 800000
 
@@ -152,12 +151,6 @@ initial=[dpHlumen_initial, dDy_initial, dpmf_initial, dKlumen_initial, dKstrom_i
 t_span = (0,7200)
 t_eval = np.linspace(0,7200,7200)
 
-gtypes = ['WT', 'kea3', 'vccn1']
-# gtypes = ['WT']
-colors = ['black', 'blue', 'red']
-# colors = ['blue']
-variables = ['pHlumen', 'Dy', 'pmf', 'Klumen', 'Kstroma', 'Cl_lumen', 'Cl_stroma', 'Hstroma', 'pHstroma']
-
 results = {}
 for gtype in gtypes:
     sim_a_gtype(gtype)
@@ -174,67 +167,88 @@ stroma_total = {gtype: results[gtype].y[6,:] + 0.1 for gtype in gtypes}
 delta_total = {gtype: lumen_total[gtype] - stroma_total[gtype]
                for gtype in gtypes}
 
+def parameter_individual_plots():
+    """
+    Run simulations for three groups of parameter combinations and generate a separate plot for each configuration.
+    Groups:
+    1. k_VCCN1=12, ATP_hydrolysis_turnover=25, k_KEA3=[0, 2500000, 5000000, 12500000, 25000000]
+    2. k_KEA3=2500000, ATP_hydrolysis_turnover=25, k_VCCN1=[0, 12, 24, 60, 120]
+    3. k_VCCN1=12, k_KEA3=2500000, ATP_hydrolysis_turnover=[0, 25, 50, 125, 250]
+    Each plot shows delta_K and delta_Cl for a single parameter configuration.
+    """
+    # Parameter groups
+    param_groups = [
+        {
+            'name': 'k_KEA3',
+            'values': [0, 2500000, 5000000, 12500000, 25000000],
+            'fixed': {'k_VCCN1': 12, 'ATP_hydrolysis_turnover': 25},
+            'group_id': 'group1'
+        },
+        {
+            'name': 'k_VCCN1',
+            'values': [0, 12, 24, 60, 120],
+            'fixed': {'k_KEA3': 2500000, 'ATP_hydrolysis_turnover': 25},
+            'group_id': 'group2'
+        },
+        {
+            'name': 'ATP_hydrolysis_turnover',
+            'values': [0, 25, 50, 125, 250],
+            'fixed': {'k_VCCN1': 12, 'k_KEA3': 2500000},
+            'group_id': 'group3'
+        }
+    ]
 
-for gtype in gtypes:
-    df = pd.DataFrame({
-        'Time_s': t_eval,
-        'pHlumen': results[gtype].y[0, :],
-        'Dy': results[gtype].y[1, :],
-        'pmf': results[gtype].y[2, :],
-        'Klumen': results[gtype].y[3, :],
-        'Kstroma': results[gtype].y[4, :],
-        'Cl_lumen': results[gtype].y[5, :],
-        'Cl_stroma': results[gtype].y[6, :],
-        'Hstroma': results[gtype].y[7, :],
-        'pHstroma': results[gtype].y[8, :]
-    })
-    df.to_csv(f'{gtype}_variables.csv', index=False)
+    # Run simulations and generate plots for each group
+    for group in param_groups:
+        param_name = group['name']
+        param_values = group['values']
+        fixed_params = group['fixed']
+        group_id = group['group_id']
+        
+        for param_value in param_values:
+            # Set fixed parameters
+            Kx.k_KEA = fixed_params.get('k_KEA3', Kx.k_KEA)
+            Kx.k_VCCN1 = fixed_params.get('k_VCCN1', Kx.k_VCCN1)
+            ATP_hydrolysis_turnover = fixed_params.get('ATP_hydrolysis_turnover', 25)
+            
+            # Set variable parameter
+            if param_name == 'k_KEA3':
+                Kx.k_KEA = param_value
+            elif param_name == 'k_VCCN1':
+                Kx.k_VCCN1 = param_value
+            elif param_name == 'ATP_hydrolysis_turnover':
+                ATP_hydrolysis_turnover = param_value
+            
+            # Run simulation
+            sol = solve_ivp(model, t_span, initial, t_eval=t_eval, method="BDF", 
+                           args=(ATP_hydrolysis_turnover,))
+            
+            # Calculate delta_K and delta_Cl
+            delta_K = sol.y[3, :] - 0.1
+            delta_Cl = sol.y[5, :] - sol.y[6, :]
+            
+            # Create a new figure for this parameter configuration
+            plt.figure(figsize=(14, 6))
+            # Plot delta_K
+            plt.subplot(1, 2, 1)
+            plt.plot(t_eval, delta_K, color='black', alpha=0.75)
+            plt.xlabel('Time (s)', fontsize=16)
+            plt.ylabel('ΔK (Klumen - 0.1)', fontsize=16)
+            plt.title(f'{param_name} = {param_value}', fontsize=16)
+            plt.grid(False)
+            
+            # Plot delta_Cl
+            plt.subplot(1, 2, 2)
+            plt.plot(t_eval, delta_Cl, color='black', alpha=0.75)
+            plt.xlabel('Time (s)', fontsize=16)
+            plt.ylabel('ΔCl (Cl_lumen - Cl_stroma)', fontsize=16)
+            plt.title(f'{param_name} = {param_value}', fontsize=16)
+            plt.grid(False)
+            
+            plt.tight_layout()
+            # Save with a unique filename
+            plt.savefig(f'param_{group_id}_{param_name}_{param_value}.png')
+            plt.close()
 
-plt.figure(figsize=(14,6))
-
-# for idx, gtype in enumerate(gtypes):
-#     plt.plot(results[gtype].t,delta_total[gtype], label = gtype, color = colors[idx], alpha = 0.75)
-    
-# plt.xlabel('Time(s)', fontsize = 16)
-# plt.ylabel('delta_total (lumen_total-stroma_total)',  fontsize = 16)
-# plt.legend(
-#     loc = 'upper center',
-#     bbox_to_anchor = (0.5,1.1),
-#     ncol = 3,
-#     frameon = False,
-#     fontsize = 18
-# )
-
-plt.subplot(1,2,1)
-for idx, gtype in enumerate(gtypes):
-    plt.plot(results[gtype].t, delta_K[gtype], label = gtype, color = colors[idx], alpha = 0.75)
-plt.xlabel('Time(s)', fontsize=16)
-plt.ylabel('delta_K (Klumen-0.1)', fontsize=16)
-# plt.title
-plt.legend(
-    loc = "upper center",
-    bbox_to_anchor = (0.5,1.1),
-    ncol = 3,
-    frameon = False,
-    fontsize = 12
-)
-plt.grid(False)
-
-plt.subplot(1,2,2)
-for idx, gtype in enumerate(gtypes):
-    plt.plot(results[gtype].t, delta_Cl[gtype], label = gtype, color = colors[idx], alpha = 0.75)
-plt.xlabel('Time(s)', fontsize=16)
-plt.ylabel('delta_Cl (Cl_lumen-Cl_stroma)', fontsize=16)
-# plt.title
-plt.legend(
-    loc = "upper center",
-    bbox_to_anchor = (0.5,1.1),
-    ncol = 3,
-    frameon = False,
-    fontsize = 12
-)
-plt.grid(False)
-
-plt.show()
-
-
+# Run the parameter individual plots
+parameter_individual_plots()
